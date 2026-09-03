@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QIcon
 from repositories.user_repository import UserRepository
-from ui.welcome_window import WelcomeWindow
+from ui.main_window import MainWindow
 from ui.register_window import RegisterWindow
 
 class LoginWindow(QWidget):
@@ -109,8 +109,8 @@ class LoginWindow(QWidget):
             QMessageBox.critical(self, "Error", "Credenciales incorrectas.")
             return
 
-        self.welcome_window = WelcomeWindow(usuario[1])
-        self.welcome_window.show()
+        self.main_window = MainWindow(usuario[0], usuario[1])
+        self.main_window.show()
         self.close()
 
     def abrir_registro(self):
