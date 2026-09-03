@@ -73,8 +73,8 @@ class JornadaWidget(QWidget):
         self.entrada_edit.setDisplayFormat("HH:mm")
         self.entrada_edit.setSpecialValueText("--:--")          # se muestra cuando valor == mínimo
         self.entrada_edit.setTime(self.entrada_edit.minimumTime())  # inicia en '--:--'
-        self.entrada_edit.setFixedWidth(110)
-        self.entrada_edit.setStyleSheet(self._input_style())
+        self.entrada_edit.setFixedWidth(130)
+        self.entrada_edit.setStyleSheet(self._time_edit_style())
         self.entrada_edit.timeChanged.connect(self._on_entrada_changed)
         self._add_row(card_layout, "Horario de entrada", self.entrada_edit)
 
@@ -83,8 +83,8 @@ class JornadaWidget(QWidget):
         self.salida_edit.setDisplayFormat("HH:mm")
         self.salida_edit.setSpecialValueText("--:--")
         self.salida_edit.setTime(self.salida_edit.minimumTime())
-        self.salida_edit.setFixedWidth(110)
-        self.salida_edit.setStyleSheet(self._input_style())
+        self.salida_edit.setFixedWidth(130)
+        self.salida_edit.setStyleSheet(self._time_edit_style())
         self.salida_edit.timeChanged.connect(self._on_salida_changed)
         self._add_row(card_layout, "Horario de salida", self.salida_edit)
 
@@ -116,13 +116,75 @@ class JornadaWidget(QWidget):
 
     @staticmethod
     def _input_style():
+        """
+        Estilo base para QLineEdit.
+        Se fuerza color: #2c3e50 para evitar que el tema oscuro de Windows
+        pinte el texto de blanco sobre fondo claro.
+        """
         return (
             "padding: 7px 10px;"
             "font-size: 14px;"
+            "color: #2c3e50;"
             "border: 1px solid #dfe6e9;"
             "border-radius: 5px;"
             "background-color: #fdfdfd;"
         )
+
+    @staticmethod
+    def _time_edit_style():
+        """
+        Estilo para QTimeEdit.
+        Incluye color explícito del texto (fix para tema oscuro de Windows)
+        y estilo visible para las flechas de subir/bajar.
+        """
+        return """
+            QTimeEdit {
+                padding: 7px 10px;
+                font-size: 14px;
+                color: #2c3e50;
+                border: 1px solid #dfe6e9;
+                border-radius: 5px;
+                background-color: #fdfdfd;
+            }
+            QTimeEdit::up-button {
+                subcontrol-origin: border;
+                subcontrol-position: top right;
+                width: 20px;
+                border-left: 1px solid #dfe6e9;
+                background-color: #f0f2f5;
+                border-top-right-radius: 5px;
+            }
+            QTimeEdit::up-button:hover {
+                background-color: #dfe6e9;
+            }
+            QTimeEdit::down-button {
+                subcontrol-origin: border;
+                subcontrol-position: bottom right;
+                width: 20px;
+                border-left: 1px solid #dfe6e9;
+                background-color: #f0f2f5;
+                border-bottom-right-radius: 5px;
+            }
+            QTimeEdit::down-button:hover {
+                background-color: #dfe6e9;
+            }
+            QTimeEdit::up-arrow {
+                image: none;
+                width: 0;
+                height: 0;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+                border-bottom: 6px solid #636e72;
+            }
+            QTimeEdit::down-arrow {
+                image: none;
+                width: 0;
+                height: 0;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+                border-top: 6px solid #636e72;
+            }
+        """
 
     # ── Slots ────────────────────────────────────────────────────────
 
