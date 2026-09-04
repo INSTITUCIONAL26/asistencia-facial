@@ -352,13 +352,15 @@ class RegistrarAlumnoWidget(QWidget):
         self.fecha_nac_edit.setDisplayFormat("dd/MM/yyyy")
         self.fecha_nac_edit.setDate(QDate(2000, 1, 1))
         self.fecha_nac_edit.setFixedHeight(36)
-        self.fecha_nac_edit.setStyleSheet(self._input_style())
+        self.fecha_nac_edit.setMinimumWidth(130)
+        self.fecha_nac_edit.setStyleSheet(self._date_edit_style())
 
         self.anio_spin = QSpinBox()
         self.anio_spin.setRange(1900, 2100)
         self.anio_spin.setValue(date.today().year)
         self.anio_spin.setFixedHeight(36)
-        self.anio_spin.setStyleSheet(self._input_style())
+        self.anio_spin.setMinimumWidth(100)
+        self.anio_spin.setStyleSheet(self._spinbox_style())
 
         self._add_grid_row(grid, 3, "Fecha de Nacimiento *", self.fecha_nac_edit,
                                     "Año de Ingreso *", self.anio_spin)
@@ -492,6 +494,116 @@ class RegistrarAlumnoWidget(QWidget):
             "border-radius: 5px;"
             "background-color: #fdfdfd;"
         )
+
+    @staticmethod
+    def _date_edit_style() -> str:
+        return """
+            QDateEdit {
+                padding: 4px 8px;
+                font-size: 13px;
+                color: #2c3e50;
+                border: 1px solid #dfe6e9;
+                border-radius: 5px;
+                background-color: #fdfdfd;
+            }
+            QDateEdit::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 24px;
+                border-left: 1px solid #dfe6e9;
+                background-color: #f0f2f5;
+                border-top-right-radius: 3px;
+                border-bottom-right-radius: 3px;
+            }
+            QDateEdit::down-arrow {
+                image: none;
+                width: 0;
+                height: 0;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+                border-top: 6px solid #636e72;
+            }
+            /* Fix transparent arrows and styles in the pop-up calendar */
+            QCalendarWidget QWidget {
+                alternate-background-color: #f5f6fa;
+            }
+            QCalendarWidget QToolButton {
+                color: #2c3e50;
+                background-color: transparent;
+                font-size: 14px;
+                icon-size: 16px 16px;
+            }
+            QCalendarWidget QToolButton:hover {
+                background-color: #dfe6e9;
+                border-radius: 4px;
+            }
+            QCalendarWidget QMenu {
+                width: 150px;
+                left: 20px;
+                color: #2c3e50;
+                font-size: 14px;
+                background-color: white;
+            }
+            QCalendarWidget QSpinBox {
+                width: 50px;
+                font-size: 14px;
+                color: #2c3e50;
+                background-color: white;
+                selection-background-color: #2980b9;
+                selection-color: white;
+            }
+            QCalendarWidget QSpinBox::up-button { subcontrol-origin: border; subcontrol-position: top right; width: 16px; }
+            QCalendarWidget QSpinBox::down-button { subcontrol-origin: border; subcontrol-position: bottom right; width: 16px; }
+            QCalendarWidget QAbstractItemView:enabled {
+                font-size: 13px;
+                color: #2c3e50;
+                background-color: white;
+                selection-background-color: #2980b9;
+                selection-color: white;
+            }
+            QCalendarWidget QAbstractItemView:disabled { color: #bdc3c7; }
+        """
+
+    @staticmethod
+    def _spinbox_style() -> str:
+        return """
+            QSpinBox {
+                padding: 4px 8px;
+                font-size: 13px;
+                color: #2c3e50;
+                border: 1px solid #dfe6e9;
+                border-radius: 5px;
+                background-color: #fdfdfd;
+            }
+            QSpinBox::up-button {
+                subcontrol-origin: border;
+                subcontrol-position: top right;
+                width: 20px;
+                border-left: 1px solid #dfe6e9;
+                background-color: #f0f2f5;
+                border-top-right-radius: 5px;
+            }
+            QSpinBox::up-button:hover { background-color: #dfe6e9; }
+            QSpinBox::down-button {
+                subcontrol-origin: border;
+                subcontrol-position: bottom right;
+                width: 20px;
+                border-left: 1px solid #dfe6e9;
+                background-color: #f0f2f5;
+                border-bottom-right-radius: 5px;
+            }
+            QSpinBox::down-button:hover { background-color: #dfe6e9; }
+            QSpinBox::up-arrow {
+                image: none; width: 0; height: 0;
+                border-left: 4px solid transparent; border-right: 4px solid transparent;
+                border-bottom: 5px solid #636e72;
+            }
+            QSpinBox::down-arrow {
+                image: none; width: 0; height: 0;
+                border-left: 4px solid transparent; border-right: 4px solid transparent;
+                border-top: 5px solid #636e72;
+            }
+        """
 
     def _make_input(self, placeholder: str = "") -> QLineEdit:
         inp = QLineEdit()
