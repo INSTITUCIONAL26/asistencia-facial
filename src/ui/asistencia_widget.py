@@ -40,11 +40,11 @@ class AsistenciaWidget(QWidget):
 
         # ── Card para el Título (similar a las otras vistas) ─────────
         title_card = QFrame()
-        title_card.setStyleSheet("background-color: white; border-radius: 8px; border: 1px solid #dfe6e9;")
+        title_card.setStyleSheet("background-color: transparent; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);")
         title_layout = QVBoxLayout(title_card)
         title_layout.setContentsMargins(36, 32, 36, 32)
         title = QLabel("Asistencia por Captura Facial")
-        title.setStyleSheet("font-size: 20px; font-weight: bold; color: #2c3e50; border: none;")
+        title.setStyleSheet("font-size: 20px; font-weight: bold; color: white; border: none;")
         title_layout.addWidget(title)
         outer.addWidget(title_card)
 
@@ -137,7 +137,7 @@ class AsistenciaWidget(QWidget):
     def _estilo_btn_abrir():
         return """
             QPushButton {
-                background-color: #27ae60;
+                background-color: #0d6efd;
                 color: white;
                 font-size: 14px;
                 font-weight: bold;
@@ -146,7 +146,7 @@ class AsistenciaWidget(QWidget):
                 border: none;
             }
             QPushButton:hover {
-                background-color: #219a52;
+                background-color: #0b5ed7;
             }
         """
 

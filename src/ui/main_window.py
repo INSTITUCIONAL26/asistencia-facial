@@ -22,7 +22,7 @@ class MainWindow(QMainWindow):
         # ── Widget central ──────────────────────────────────────────
         central = QWidget()
         self.setCentralWidget(central)
-        central.setStyleSheet("background-color: #58afdd;")
+        # Se elimina el color de fondo para heredar el tema oscuro nativo
 
         main_layout = QHBoxLayout(central)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -31,7 +31,7 @@ class MainWindow(QMainWindow):
         # ── Sidebar ─────────────────────────────────────────────────
         sidebar = QFrame()
         sidebar.setFixedWidth(210)
-        sidebar.setStyleSheet("background-color: #1e2a38;")
+        sidebar.setStyleSheet("background-color: rgba(255, 255, 255, 0.03); border-right: 1px solid rgba(255, 255, 255, 0.1);")
 
         sidebar_layout = QVBoxLayout(sidebar)
         sidebar_layout.setContentsMargins(0, 0, 0, 20)
@@ -45,7 +45,8 @@ class MainWindow(QMainWindow):
             font-size: 15px;
             font-weight: bold;
             padding: 28px 10px 24px 10px;
-            border-bottom: 1px solid #2e4057;
+            border: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         """)
         sidebar_layout.addWidget(title_label)
 
@@ -113,14 +114,14 @@ class MainWindow(QMainWindow):
         if activo:
             return """
                 QPushButton {
-                    background-color: #2980b9;
+                    background-color: #0d6efd;
                     color: white;
                     font-size: 13px;
                     font-weight: bold;
                     text-align: left;
                     padding-left: 24px;
                     border: none;
-                    border-left: 4px solid #5dade2;
+                    border-left: 4px solid #86b7fe;
                 }
             """
         return """
@@ -134,7 +135,7 @@ class MainWindow(QMainWindow):
                 border: none;
             }
             QPushButton:hover {
-                background-color: #2c3e50;
+                background-color: rgba(255, 255, 255, 0.05);
                 color: white;
             }
         """

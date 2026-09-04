@@ -44,7 +44,7 @@ class AnguloFotoWidget(QWidget):
         lbl_titulo = QLabel(self.titulo)
         lbl_titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl_titulo.setStyleSheet(
-            "font-size: 13px; font-weight: bold; color: #2c3e50;"
+            "font-size: 13px; font-weight: bold; color: white;"
         )
         layout.addWidget(lbl_titulo)
 
@@ -58,7 +58,7 @@ class AnguloFotoWidget(QWidget):
         self.btn_cargar.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_cargar.setStyleSheet("""
             QPushButton {
-                background-color: #2980b9;
+                background-color: #0d6efd;
                 color: white;
                 font-size: 12px;
                 font-weight: bold;
@@ -66,7 +66,7 @@ class AnguloFotoWidget(QWidget):
                 border-radius: 5px;
                 border: none;
             }
-            QPushButton:hover { background-color: #2471a3; }
+            QPushButton:hover { background-color: #0b5ed7; }
         """)
         self.btn_cargar.clicked.connect(self._cargar_foto)
 
@@ -76,15 +76,15 @@ class AnguloFotoWidget(QWidget):
         self.btn_tomar.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_tomar.setStyleSheet("""
             QPushButton {
-                background-color: #7f8c8d;
-                color: white;
+                background-color: transparent;
+                color: #0d6efd;
                 font-size: 12px;
                 font-weight: bold;
                 padding: 6px 14px;
                 border-radius: 5px;
-                border: none;
+                border: 1px solid #0d6efd;
             }
-            QPushButton:hover { background-color: #626567; }
+            QPushButton:hover { background-color: rgba(13, 110, 253, 0.1); }
         """)
         # Sin lógica por ahora — próximo incremento
 
@@ -196,16 +196,16 @@ class AnguloFotoWidget(QWidget):
         if vacio:
             self.panel.setStyleSheet("""
                 QFrame {
-                    background-color: #ecf0f1;
-                    border: 2px dashed #bdc3c7;
+                    background-color: transparent;
+                    border: 2px dashed rgba(255, 255, 255, 0.2);
                     border-radius: 6px;
                 }
             """)
         else:
             self.panel.setStyleSheet("""
                 QFrame {
-                    background-color: #eafaf1;
-                    border: 2px solid #27ae60;
+                    background-color: transparent;
+                    border: 2px solid #0d6efd;
                     border-radius: 6px;
                 }
             """)
@@ -263,7 +263,7 @@ class RegistrarAlumnoWidget(QWidget):
         # Título
         title = QLabel("Registrar Alumno")
         title.setStyleSheet(
-            "font-size: 20px; font-weight: bold; color: #2c3e50;"
+            "font-size: 20px; font-weight: bold; color: white;"
         )
         cl.addWidget(title)
 
@@ -281,14 +281,14 @@ class RegistrarAlumnoWidget(QWidget):
         btn_registrar.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_registrar.setStyleSheet("""
             QPushButton {
-                background-color: #27ae60;
+                background-color: #0d6efd;
                 color: white;
                 font-size: 15px;
                 font-weight: bold;
                 border-radius: 7px;
                 border: none;
             }
-            QPushButton:hover { background-color: #219a52; }
+            QPushButton:hover { background-color: #0b5ed7; }
         """)
         btn_registrar.clicked.connect(self._registrar)
         cl.addWidget(btn_registrar)
@@ -303,9 +303,9 @@ class RegistrarAlumnoWidget(QWidget):
         card = QFrame()
         card.setStyleSheet("""
             QFrame {
-                background-color: white;
+                background-color: transparent;
                 border-radius: 8px;
-                border: 1px solid #dfe6e9;
+                border: 1px solid rgba(255, 255, 255, 0.1);
             }
         """)
         layout = QVBoxLayout(card)
@@ -314,7 +314,7 @@ class RegistrarAlumnoWidget(QWidget):
 
         sub = QLabel("Datos Personales")
         sub.setStyleSheet(
-            "font-size: 15px; font-weight: bold; color: #2c3e50; margin-bottom: 4px;"
+            "font-size: 15px; font-weight: bold; color: white; margin-bottom: 4px; border: none;"
         )
         layout.addWidget(sub)
 
@@ -380,9 +380,9 @@ class RegistrarAlumnoWidget(QWidget):
         card = QFrame()
         card.setStyleSheet("""
             QFrame {
-                background-color: white;
+                background-color: transparent;
                 border-radius: 8px;
-                border: 1px solid #dfe6e9;
+                border: 1px solid rgba(255, 255, 255, 0.1);
             }
         """)
         layout = QVBoxLayout(card)
@@ -391,7 +391,7 @@ class RegistrarAlumnoWidget(QWidget):
 
         sub = QLabel("Imágenes Biométricas  (las tres son obligatorias)")
         sub.setStyleSheet(
-            "font-size: 15px; font-weight: bold; color: #2c3e50; margin-bottom: 4px;"
+            "font-size: 15px; font-weight: bold; color: white; margin-bottom: 4px; border: none;"
         )
         layout.addWidget(sub)
 
@@ -489,10 +489,10 @@ class RegistrarAlumnoWidget(QWidget):
         return (
             "padding: 7px 10px;"
             "font-size: 13px;"
-            "color: #2c3e50;"
-            "border: 1px solid #dfe6e9;"
+            "color: white;"
+            "border: 1px solid #555;"
             "border-radius: 5px;"
-            "background-color: #fdfdfd;"
+            "background-color: transparent;"
         )
 
     @staticmethod
@@ -501,67 +501,67 @@ class RegistrarAlumnoWidget(QWidget):
             QDateEdit {
                 padding: 4px 8px;
                 font-size: 13px;
-                color: #2c3e50;
-                border: 1px solid #dfe6e9;
+                color: white;
+                border: 1px solid #555;
                 border-radius: 5px;
-                background-color: #fdfdfd;
+                background-color: transparent;
             }
             QDateEdit::drop-down {
-                subcontrol-origin: padding;
+                subcontrol-origin: border;
                 subcontrol-position: top right;
                 width: 24px;
-                border-left: 1px solid #dfe6e9;
-                background-color: #f0f2f5;
-                border-top-right-radius: 3px;
-                border-bottom-right-radius: 3px;
+                border: none;
+                background-color: transparent;
             }
             QDateEdit::down-arrow {
-                image: none;
-                width: 0;
-                height: 0;
-                border-left: 5px solid transparent;
-                border-right: 5px solid transparent;
-                border-top: 6px solid #636e72;
+                image: url(src/ui/assets/chevron-down.svg);
+                width: 16px;
+                height: 16px;
             }
             /* Fix transparent arrows and styles in the pop-up calendar */
             QCalendarWidget QWidget {
-                alternate-background-color: #f5f6fa;
+                alternate-background-color: #2b2b2b;
+                background-color: #1e1e1e;
+                color: white;
             }
             QCalendarWidget QToolButton {
-                color: #2c3e50;
+                color: white;
                 background-color: transparent;
                 font-size: 14px;
                 icon-size: 16px 16px;
+                border: none;
             }
             QCalendarWidget QToolButton:hover {
-                background-color: #dfe6e9;
+                background-color: #333;
                 border-radius: 4px;
             }
             QCalendarWidget QMenu {
                 width: 150px;
                 left: 20px;
-                color: #2c3e50;
+                color: white;
                 font-size: 14px;
-                background-color: white;
+                background-color: #1e1e1e;
+                border: 1px solid #555;
             }
             QCalendarWidget QSpinBox {
                 width: 50px;
                 font-size: 14px;
-                color: #2c3e50;
-                background-color: white;
-                selection-background-color: #2980b9;
+                color: white;
+                background-color: #2b2b2b;
+                border: 1px solid #555;
+                selection-background-color: #0d6efd;
                 selection-color: white;
             }
-            QCalendarWidget QSpinBox::up-button { subcontrol-origin: border; subcontrol-position: top right; width: 16px; }
-            QCalendarWidget QSpinBox::down-button { subcontrol-origin: border; subcontrol-position: bottom right; width: 16px; }
+            QCalendarWidget QSpinBox::up-button { subcontrol-origin: border; subcontrol-position: top right; width: 16px; border: none; }
+            QCalendarWidget QSpinBox::down-button { subcontrol-origin: border; subcontrol-position: bottom right; width: 16px; border: none; }
             QCalendarWidget QAbstractItemView:enabled {
                 font-size: 13px;
-                color: #2c3e50;
-                background-color: white;
-                selection-background-color: #2980b9;
+                color: white;
+                background-color: #1e1e1e;
+                selection-background-color: #0d6efd;
                 selection-color: white;
             }
-            QCalendarWidget QAbstractItemView:disabled { color: #bdc3c7; }
+            QCalendarWidget QAbstractItemView:disabled { color: #555; }
         """
 
     @staticmethod
@@ -570,38 +570,32 @@ class RegistrarAlumnoWidget(QWidget):
             QSpinBox {
                 padding: 4px 8px;
                 font-size: 13px;
-                color: #2c3e50;
-                border: 1px solid #dfe6e9;
+                color: white;
+                border: 1px solid #555;
                 border-radius: 5px;
-                background-color: #fdfdfd;
+                background-color: transparent;
             }
             QSpinBox::up-button {
                 subcontrol-origin: border;
                 subcontrol-position: top right;
-                width: 20px;
-                border-left: 1px solid #dfe6e9;
-                background-color: #f0f2f5;
-                border-top-right-radius: 5px;
+                width: 24px;
+                border: none;
+                background-color: transparent;
             }
-            QSpinBox::up-button:hover { background-color: #dfe6e9; }
             QSpinBox::down-button {
                 subcontrol-origin: border;
                 subcontrol-position: bottom right;
-                width: 20px;
-                border-left: 1px solid #dfe6e9;
-                background-color: #f0f2f5;
-                border-bottom-right-radius: 5px;
+                width: 24px;
+                border: none;
+                background-color: transparent;
             }
-            QSpinBox::down-button:hover { background-color: #dfe6e9; }
             QSpinBox::up-arrow {
-                image: none; width: 0; height: 0;
-                border-left: 4px solid transparent; border-right: 4px solid transparent;
-                border-bottom: 5px solid #636e72;
+                image: url(src/ui/assets/chevron-up.svg);
+                width: 16px; height: 16px;
             }
             QSpinBox::down-arrow {
-                image: none; width: 0; height: 0;
-                border-left: 4px solid transparent; border-right: 4px solid transparent;
-                border-top: 5px solid #636e72;
+                image: url(src/ui/assets/chevron-down.svg);
+                width: 16px; height: 16px;
             }
         """
 
@@ -615,7 +609,7 @@ class RegistrarAlumnoWidget(QWidget):
     @staticmethod
     def _add_grid_row(grid, row, lbl1, widget1, lbl2, widget2):
         """Agrega una fila de 2 columnas (label + input) al grid."""
-        label_style = "font-size: 13px; color: #636e72;"
+        label_style = "font-size: 13px; color: #a0a0a0; border: none;"
 
         l1 = QLabel(lbl1)
         l1.setStyleSheet(label_style)

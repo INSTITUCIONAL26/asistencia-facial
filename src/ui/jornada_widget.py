@@ -46,7 +46,7 @@ class JornadaWidget(QWidget):
         # Título
         title = QLabel("Configuración de la Jornada")
         title.setStyleSheet(
-            "font-size: 20px; font-weight: bold; color: #2c3e50; margin-bottom: 24px; background-color: transparent;"
+            "font-size: 20px; font-weight: bold; color: white; margin-bottom: 24px; background-color: transparent;"
         )
         outer.addWidget(title)
 
@@ -54,9 +54,9 @@ class JornadaWidget(QWidget):
         card = QFrame()
         card.setStyleSheet("""
             QFrame {
-                background-color: white;
+                background-color: transparent;
                 border-radius: 8px;
-                border: 1px solid #dfe6e9;
+                border: 1px solid rgba(255, 255, 255, 0.1);
             }
         """)
         card_layout = QVBoxLayout(card)
@@ -65,7 +65,7 @@ class JornadaWidget(QWidget):
 
         # ── Fecha (solo lectura) ─────────────────────────────────────
         fecha_label = QLabel(date.today().strftime("%d/%m/%Y"))
-        fecha_label.setStyleSheet("font-size: 14px; color: #2c3e50; padding: 6px 0;")
+        fecha_label.setStyleSheet("font-size: 14px; color: white; padding: 6px 0; border: none;")
         self._add_row(card_layout, "Fecha", fecha_label)
 
         # ── Horario de entrada ───────────────────────────────────────
@@ -106,7 +106,7 @@ class JornadaWidget(QWidget):
 
         label = QLabel(label_text)
         label.setFixedWidth(160)
-        label.setStyleSheet("font-size: 14px; color: #636e72;")
+        label.setStyleSheet("font-size: 14px; color: #a0a0a0; border: none;")
         label.setAlignment(Qt.AlignmentFlag.AlignVCenter)
 
         row.addWidget(label)
@@ -116,73 +116,51 @@ class JornadaWidget(QWidget):
 
     @staticmethod
     def _input_style():
-        """
-        Estilo base para QLineEdit.
-        Se fuerza color: #2c3e50 para evitar que el tema oscuro de Windows
-        pinte el texto de blanco sobre fondo claro.
-        """
+        """Estilo base para QLineEdit."""
         return (
             "padding: 7px 10px;"
             "font-size: 14px;"
-            "color: #2c3e50;"
-            "border: 1px solid #dfe6e9;"
-            "border-radius: 5px;"
-            "background-color: #fdfdfd;"
+            "color: white;"
+            "border: 1px solid #555;"
+            "border-radius: 4px;"
+            "background-color: transparent;"
         )
 
     @staticmethod
     def _time_edit_style():
-        """
-        Estilo para QTimeEdit.
-        Incluye color explícito del texto (fix para tema oscuro de Windows)
-        y estilo visible para las flechas de subir/bajar.
-        """
+        """Estilo para QTimeEdit con chevrons nativos simulados."""
         return """
             QTimeEdit {
                 padding: 7px 10px;
                 font-size: 14px;
-                color: #2c3e50;
-                border: 1px solid #dfe6e9;
-                border-radius: 5px;
-                background-color: #fdfdfd;
+                color: white;
+                border: 1px solid #555;
+                border-radius: 4px;
+                background-color: transparent;
             }
             QTimeEdit::up-button {
                 subcontrol-origin: border;
                 subcontrol-position: top right;
-                width: 20px;
-                border-left: 1px solid #dfe6e9;
-                background-color: #f0f2f5;
-                border-top-right-radius: 5px;
-            }
-            QTimeEdit::up-button:hover {
-                background-color: #dfe6e9;
+                width: 24px;
+                border: none;
+                background-color: transparent;
             }
             QTimeEdit::down-button {
                 subcontrol-origin: border;
                 subcontrol-position: bottom right;
-                width: 20px;
-                border-left: 1px solid #dfe6e9;
-                background-color: #f0f2f5;
-                border-bottom-right-radius: 5px;
-            }
-            QTimeEdit::down-button:hover {
-                background-color: #dfe6e9;
+                width: 24px;
+                border: none;
+                background-color: transparent;
             }
             QTimeEdit::up-arrow {
-                image: none;
-                width: 0;
-                height: 0;
-                border-left: 5px solid transparent;
-                border-right: 5px solid transparent;
-                border-bottom: 6px solid #636e72;
+                image: url(src/ui/assets/chevron-up.svg);
+                width: 16px;
+                height: 16px;
             }
             QTimeEdit::down-arrow {
-                image: none;
-                width: 0;
-                height: 0;
-                border-left: 5px solid transparent;
-                border-right: 5px solid transparent;
-                border-top: 6px solid #636e72;
+                image: url(src/ui/assets/chevron-down.svg);
+                width: 16px;
+                height: 16px;
             }
         """
 
