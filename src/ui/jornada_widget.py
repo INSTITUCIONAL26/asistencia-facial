@@ -37,16 +37,16 @@ class JornadaWidget(QWidget):
     # ── Construcción de la UI ────────────────────────────────────────
 
     def _build_ui(self):
-        self.setStyleSheet("background-color: #f5f6fa;")
+        self.setStyleSheet("background-color: transparent;")
 
         outer = QVBoxLayout(self)
         outer.setContentsMargins(60, 40, 60, 40)
         outer.setSpacing(0)
 
         # Título
-        title = QLabel("📅  Configuración de la Jornada")
+        title = QLabel("Configuración de la Jornada")
         title.setStyleSheet(
-            "font-size: 20px; font-weight: bold; color: #2c3e50; margin-bottom: 24px;"
+            "font-size: 20px; font-weight: bold; color: #2c3e50; margin-bottom: 24px; background-color: transparent;"
         )
         outer.addWidget(title)
 

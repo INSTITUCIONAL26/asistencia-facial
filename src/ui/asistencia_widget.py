@@ -2,7 +2,8 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QFrame, QMessageBox
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSize
+from PySide6.QtGui import QIcon
 
 
 class AsistenciaWidget(QWidget):
@@ -19,8 +20,8 @@ class AsistenciaWidget(QWidget):
     """
 
     # ── Textos del botón toggle ──────────────────────────────────────
-    _TEXTO_ABRIR  = "▶   Abrir Cámara"
-    _TEXTO_CERRAR = "⏹   Cerrar Cámara"
+    _TEXTO_ABRIR  = "  Abrir Cámara"
+    _TEXTO_CERRAR = "  Cerrar Cámara"
 
     def __init__(self, jornada_widget):
         super().__init__()
@@ -31,24 +32,29 @@ class AsistenciaWidget(QWidget):
     # ── Construcción de la UI ────────────────────────────────────────
 
     def _build_ui(self):
-        self.setStyleSheet("background-color: #f5f6fa;")
+        self.setStyleSheet("background-color: transparent;")
 
         outer = QVBoxLayout(self)
         outer.setContentsMargins(60, 40, 60, 40)
         outer.setSpacing(20)
 
-        # Título
-        title = QLabel("📷  Asistencia por Captura Facial")
-        title.setStyleSheet(
-            "font-size: 20px; font-weight: bold; color: #2c3e50;"
-        )
-        outer.addWidget(title)
+        # ── Card para el Título (similar a las otras vistas) ─────────
+        title_card = QFrame()
+        title_card.setStyleSheet("background-color: white; border-radius: 8px; border: 1px solid #dfe6e9;")
+        title_layout = QVBoxLayout(title_card)
+        title_layout.setContentsMargins(36, 32, 36, 32)
+        title = QLabel("Asistencia por Captura Facial")
+        title.setStyleSheet("font-size: 20px; font-weight: bold; color: #2c3e50; border: none;")
+        title_layout.addWidget(title)
+        outer.addWidget(title_card)
 
         # ── Fila de botones ──────────────────────────────────────────
         btn_row = QHBoxLayout()
         btn_row.setSpacing(12)
 
         self.btn_camara = QPushButton(self._TEXTO_ABRIR)
+        self.btn_camara.setIcon(QIcon("src/ui/assets/play.svg"))
+        self.btn_camara.setIconSize(QSize(18, 18))
         self.btn_camara.setFixedHeight(42)
         self.btn_camara.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_camara.setStyleSheet(self._estilo_btn_abrir())
@@ -107,6 +113,7 @@ class AsistenciaWidget(QWidget):
         # Jornada OK → abrir cámara (lógica real en próximo incremento)
         self._camara_abierta = True
         self.btn_camara.setText(self._TEXTO_CERRAR)
+        self.btn_camara.setIcon(QIcon("src/ui/assets/square.svg"))
         self.btn_camara.setStyleSheet(self._estilo_btn_cerrar())
         self.lbl_estado_camara.setText("[ Cámara abierta — video en próximo incremento ]")
         self.lbl_estado_camara.setStyleSheet(
@@ -117,6 +124,7 @@ class AsistenciaWidget(QWidget):
         """Cierra la cámara y restaura el estado inicial del panel."""
         self._camara_abierta = False
         self.btn_camara.setText(self._TEXTO_ABRIR)
+        self.btn_camara.setIcon(QIcon("src/ui/assets/play.svg"))
         self.btn_camara.setStyleSheet(self._estilo_btn_abrir())
         self.lbl_estado_camara.setText("[ Cámara cerrada ]")
         self.lbl_estado_camara.setStyleSheet(

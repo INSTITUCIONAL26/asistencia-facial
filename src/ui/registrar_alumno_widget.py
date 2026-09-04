@@ -6,8 +6,8 @@ from PySide6.QtWidgets import (
     QScrollArea, QDateEdit, QSpinBox,
     QFileDialog, QMessageBox, QSizePolicy, QStackedWidget
 )
-from PySide6.QtCore import Qt, QDate, QRegularExpression
-from PySide6.QtGui import QPixmap, QRegularExpressionValidator
+from PySide6.QtCore import Qt, QDate, QRegularExpression, QSize
+from PySide6.QtGui import QPixmap, QRegularExpressionValidator, QIcon
 
 from repositories.alumno_repository import AlumnoRepository
 
@@ -52,7 +52,9 @@ class AnguloFotoWidget(QWidget):
         btn_row = QHBoxLayout()
         btn_row.setSpacing(8)
 
-        self.btn_cargar = QPushButton("Cargar Foto")
+        self.btn_cargar = QPushButton(" Cargar Foto")
+        self.btn_cargar.setIcon(QIcon("src/ui/assets/upload.svg"))
+        self.btn_cargar.setIconSize(QSize(14, 14))
         self.btn_cargar.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_cargar.setStyleSheet("""
             QPushButton {
@@ -68,7 +70,9 @@ class AnguloFotoWidget(QWidget):
         """)
         self.btn_cargar.clicked.connect(self._cargar_foto)
 
-        self.btn_tomar = QPushButton("Tomar Foto")
+        self.btn_tomar = QPushButton(" Tomar Foto")
+        self.btn_tomar.setIcon(QIcon("src/ui/assets/camera.svg"))
+        self.btn_tomar.setIconSize(QSize(14, 14))
         self.btn_tomar.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_tomar.setStyleSheet("""
             QPushButton {
@@ -120,17 +124,17 @@ class AnguloFotoWidget(QWidget):
         pi_layout.setContentsMargins(4, 4, 4, 4)
         pi_layout.setSpacing(4)
 
-        # Botón 🗑 arriba a la derecha
+        # Botón borrar arriba a la derecha
         trash_row = QHBoxLayout()
         trash_row.addStretch()
-        self.btn_borrar = QPushButton("🗑")
+        self.btn_borrar = QPushButton()
+        self.btn_borrar.setIcon(QIcon("src/ui/assets/trash-2.svg"))
+        self.btn_borrar.setIconSize(QSize(16, 16))
         self.btn_borrar.setFixedSize(30, 30)
         self.btn_borrar.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_borrar.setStyleSheet("""
             QPushButton {
                 background-color: #e74c3c;
-                color: white;
-                font-size: 14px;
                 border-radius: 6px;
                 border: none;
             }
@@ -239,7 +243,7 @@ class RegistrarAlumnoWidget(QWidget):
     # ── Construcción de la UI ────────────────────────────────────────
 
     def _build_ui(self):
-        self.setStyleSheet("background-color: #f5f6fa;")
+        self.setStyleSheet("background-color: transparent;")
 
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
@@ -247,17 +251,17 @@ class RegistrarAlumnoWidget(QWidget):
         # ── ScrollArea ───────────────────────────────────────────────
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("QScrollArea { border: none; background-color: #f5f6fa; }")
+        scroll.setStyleSheet("QScrollArea { border: none; background-color: transparent; }")
 
         content = QWidget()
-        content.setStyleSheet("background-color: #f5f6fa;")
+        content.setStyleSheet("background-color: transparent;")
 
         cl = QVBoxLayout(content)
         cl.setContentsMargins(60, 40, 60, 40)
         cl.setSpacing(24)
 
         # Título
-        title = QLabel("👤  Registrar Alumno")
+        title = QLabel("Registrar Alumno")
         title.setStyleSheet(
             "font-size: 20px; font-weight: bold; color: #2c3e50;"
         )
@@ -270,7 +274,9 @@ class RegistrarAlumnoWidget(QWidget):
         cl.addWidget(self._build_fotos_card())
 
         # ── Botón Registrar ──────────────────────────────────────────
-        btn_registrar = QPushButton("✔   Registrar Alumno")
+        btn_registrar = QPushButton("  Registrar Alumno")
+        btn_registrar.setIcon(QIcon("src/ui/assets/check.svg"))
+        btn_registrar.setIconSize(QSize(20, 20))
         btn_registrar.setFixedHeight(48)
         btn_registrar.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_registrar.setStyleSheet("""
@@ -453,7 +459,7 @@ class RegistrarAlumnoWidget(QWidget):
             for aw in angulos:
                 self.repo.guardar_foto(alumno_id, aw.angulo_key, aw.get_imagen_bytes())
 
-            QMessageBox.information(self, "Éxito", "✅  Alumno registrado correctamente.")
+            QMessageBox.information(self, "Éxito", "Alumno registrado correctamente.")
             self._limpiar()
 
         except Exception as e:

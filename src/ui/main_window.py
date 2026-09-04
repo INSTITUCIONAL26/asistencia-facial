@@ -1,8 +1,9 @@
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
-    QPushButton, QStackedWidget, QLabel, QSizePolicy
+    QPushButton, QStackedWidget, QLabel, QSizePolicy, QFrame
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSize
+from PySide6.QtGui import QIcon
 
 from ui.asistencia_widget import AsistenciaWidget
 from ui.jornada_widget import JornadaWidget
@@ -21,13 +22,14 @@ class MainWindow(QMainWindow):
         # ── Widget central ──────────────────────────────────────────
         central = QWidget()
         self.setCentralWidget(central)
+        central.setStyleSheet("background-color: #58afdd;")
 
         main_layout = QHBoxLayout(central)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
         # ── Sidebar ─────────────────────────────────────────────────
-        sidebar = QWidget()
+        sidebar = QFrame()
         sidebar.setFixedWidth(210)
         sidebar.setStyleSheet("background-color: #1e2a38;")
 
@@ -36,7 +38,7 @@ class MainWindow(QMainWindow):
         sidebar_layout.setSpacing(0)
 
         # Logo / título del sidebar
-        title_label = QLabel("📋  Asistencia\nFacial")
+        title_label = QLabel("Asistencia\nFacial")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title_label.setStyleSheet("""
             color: white;
@@ -60,14 +62,16 @@ class MainWindow(QMainWindow):
 
         # ── Botones del sidebar ─────────────────────────────────────
         opciones = [
-            ("📷   Captura Facial",      0),
-            ("📅   Configurar Jornada",  1),
-            ("👤   Registrar Alumno",    2),
+            ("  Captura Facial",      "src/ui/assets/camera.svg",    0),
+            ("  Configurar Jornada",  "src/ui/assets/calendar.svg",  1),
+            ("  Registrar Alumno",    "src/ui/assets/user-plus.svg", 2),
         ]
 
         self.sidebar_buttons = []
-        for texto, indice in opciones:
+        for texto, icono_path, indice in opciones:
             btn = QPushButton(texto)
+            btn.setIcon(QIcon(icono_path))
+            btn.setIconSize(QSize(18, 18))
             btn.setCheckable(True)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
             btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
@@ -80,7 +84,7 @@ class MainWindow(QMainWindow):
         sidebar_layout.addStretch()
 
         # Usuario en pie del sidebar
-        user_label = QLabel(f"👤  {nombre_usuario}")
+        user_label = QLabel(nombre_usuario)
         user_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         user_label.setStyleSheet("color: #7f8c8d; font-size: 12px; padding: 8px;")
         user_label.setWordWrap(True)
