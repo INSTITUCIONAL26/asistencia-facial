@@ -399,8 +399,8 @@ class RegistrarAlumnoWidget(QWidget):
         angulos_row.setSpacing(20)
 
         self.angulo_frontal   = AnguloFotoWidget("Ángulo Frontal",    "frontal")
-        self.angulo_izquierdo = AnguloFotoWidget("Ángulo Izquierdo",  "izquierdo")
-        self.angulo_derecho   = AnguloFotoWidget("Ángulo Derecho",    "derecho")
+        self.angulo_izquierdo = AnguloFotoWidget("Ángulo Izquierdo",  "perfil_izquierdo")
+        self.angulo_derecho   = AnguloFotoWidget("Ángulo Derecho",    "perfil_derecho")
 
         angulos_row.addWidget(self.angulo_frontal)
         angulos_row.addWidget(self.angulo_izquierdo)
