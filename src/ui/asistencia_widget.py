@@ -131,6 +131,11 @@ class AsistenciaWidget(QWidget):
             "color: #7f8c8d; font-size: 15px; border: none;"
         )
 
+    def on_jornada_estado_cambiado(self, configurada: bool):
+        """Slot que reacciona a los cambios en la Jornada. Si se desconfigura y la cámara está abierta, la cierra."""
+        if not configurada and self._camara_abierta:
+            self._cerrar_camara()
+
     # ── Estilos de botón ─────────────────────────────────────────────
 
     @staticmethod

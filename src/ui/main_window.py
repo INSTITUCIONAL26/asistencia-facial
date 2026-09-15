@@ -56,6 +56,9 @@ class MainWindow(QMainWindow):
         self.asistencia_widget = AsistenciaWidget(self.jornada_widget)
         self.registrar_alumno_widget = RegistrarAlumnoWidget()
 
+        # Conectar la señal de cambio de estado de jornada para que la cámara se apague si se desconfigura
+        self.jornada_widget.estado_cambiado.connect(self.asistencia_widget.on_jornada_estado_cambiado)
+
         self.stack = QStackedWidget()
         self.stack.addWidget(self.asistencia_widget)        # índice 0
         self.stack.addWidget(self.jornada_widget)           # índice 1

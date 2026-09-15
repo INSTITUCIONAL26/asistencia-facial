@@ -1,25 +1,26 @@
 from datetime import date
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QLineEdit, QTimeEdit, QFrame
+    QWidget, QVBoxLayout, QHBoxLayout, QFrame,
+    QLabel, QLineEdit, QTimeEdit
 )
-from PySide6.QtCore import Qt, QTime
+from PySide6.QtCore import Qt, QTime, Signal
 
 
 class JornadaWidget(QWidget):
     """
-    Vista de Configuración de la Jornada.
-
-    Campos:
-        - Fecha          : automática del sistema (solo lectura).
+    Vista de Configuración de Jornada.
+    Permite configurar:
+        - Fecha          : Label (solo lectura, fecha actual).
         - Horario entrada: QTimeEdit, valor por defecto '--:--'.
         - Horario salida : QTimeEdit, valor por defecto '--:--'.
         - Cátedra        : QLineEdit, valor por defecto vacío.
 
-    Los valores se conservan en memoria mientras la app esté abierta.
+    Los valores se conservan en memoria mientras la app está abierta.
     En este incremento la jornada NO se persiste en la base de datos.
     """
+
+    estado_cambiado = Signal(bool)
 
     def __init__(self, usuario_id):
         super().__init__()
@@ -92,6 +93,7 @@ class JornadaWidget(QWidget):
         self.catedra_input = QLineEdit()
         self.catedra_input.setPlaceholderText("Nombre de la cátedra")
         self.catedra_input.setStyleSheet(self._input_style())
+        self.catedra_input.textChanged.connect(self._verificar_cambio_estado)
         self._add_row(card_layout, "Cátedra", self.catedra_input)
 
         outer.addWidget(card)
@@ -164,14 +166,23 @@ class JornadaWidget(QWidget):
             }
         """
 
-    # ── Slots ────────────────────────────────────────────────────────
+    # ── Slots ──────────────────────────────────────────────────────────
+
+    def _verificar_cambio_estado(self):
+        """Evalúa si el estado global de configuración cambió y emite la señal si es así."""
+        estado_actual = self.esta_configurada()
+        if estado_actual != getattr(self, '_ultimo_estado', False):
+            self._ultimo_estado = estado_actual
+            self.estado_cambiado.emit(estado_actual)
 
     def _on_entrada_changed(self, time: QTime):
         """Marca el campo como configurado si el valor difiere del mínimo ('--:--')."""
         self._entrada_configurada = time != self.entrada_edit.minimumTime()
+        self._verificar_cambio_estado()
 
     def _on_salida_changed(self, time: QTime):
         self._salida_configurada = time != self.salida_edit.minimumTime()
+        self._verificar_cambio_estado()
 
     # ── API pública ──────────────────────────────────────────────────
 
