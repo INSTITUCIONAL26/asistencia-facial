@@ -110,26 +110,54 @@ class AsistenciaWidget(QWidget):
             )
             return
 
-        # Jornada OK → abrir cámara (lógica real en próximo incremento)
+        # Jornada OK —> iniciar el CameraThread
+        from ui.camera_thread import CameraThread
+        if not hasattr(self, 'camera_thread') or self.camera_thread is None:
+            self.camera_thread = CameraThread(camera_index=0)
+            self.camera_thread.frame_captured.connect(self._actualizar_frame_camara)
+            self.camera_thread.start()
+
         self._camara_abierta = True
         self.btn_camara.setText(self._TEXTO_CERRAR)
         self.btn_camara.setIcon(QIcon("src/ui/assets/square.svg"))
         self.btn_camara.setStyleSheet(self._estilo_btn_cerrar())
-        self.lbl_estado_camara.setText("[ Cámara abierta — video en próximo incremento ]")
-        self.lbl_estado_camara.setStyleSheet(
-            "color: #27ae60; font-size: 15px; border: none;"
+        self.lbl_estado_camara.hide()
+
+    def _actualizar_frame_camara(self, qt_image):
+        from PySide6.QtGui import QPixmap
+        pixmap = QPixmap.fromImage(qt_image).scaled(
+            self.panel_video.width(), self.panel_video.height(),
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation
         )
+        # Reutilizamos el lbl_estado_camara para mostrar el video
+        self.lbl_estado_camara.setPixmap(pixmap)
+        self.lbl_estado_camara.show()
 
     def _cerrar_camara(self):
         """Cierra la cámara y restaura el estado inicial del panel."""
+        if hasattr(self, 'camera_thread') and self.camera_thread is not None:
+            self.camera_thread.stop()
+            self.camera_thread = None
+
         self._camara_abierta = False
         self.btn_camara.setText(self._TEXTO_ABRIR)
         self.btn_camara.setIcon(QIcon("src/ui/assets/play.svg"))
         self.btn_camara.setStyleSheet(self._estilo_btn_abrir())
+        
+        # Restaurar placeholder
+        self.lbl_estado_camara.clear()
         self.lbl_estado_camara.setText("[ Cámara cerrada ]")
         self.lbl_estado_camara.setStyleSheet(
             "color: #7f8c8d; font-size: 15px; border: none;"
         )
+        self.lbl_estado_camara.show()
+
+    def hideEvent(self, event):
+        """Si la ventana se oculta (cambio de pestaña), cerrar cámara por seguridad."""
+        if self._camara_abierta:
+            self._cerrar_camara()
+        super().hideEvent(event)
 
     def on_jornada_estado_cambiado(self, configurada: bool):
         """Slot que reacciona a los cambios en la Jornada. Si se desconfigura y la cámara está abierta, la cierra."""

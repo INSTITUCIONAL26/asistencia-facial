@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
     QLabel, QLineEdit, QPushButton, QFrame,
     QScrollArea, QDateEdit, QSpinBox,
-    QFileDialog, QMessageBox, QSizePolicy, QStackedWidget
+    QFileDialog, QMessageBox, QSizePolicy, QStackedWidget, QDialog
 )
 from PySide6.QtCore import Qt, QDate, QRegularExpression, QSize
 from PySide6.QtGui import QPixmap, QRegularExpressionValidator, QIcon
@@ -86,7 +86,7 @@ class AnguloFotoWidget(QWidget):
             }
             QPushButton:hover { background-color: rgba(13, 110, 253, 0.1); }
         """)
-        # Sin lógica por ahora — próximo incremento
+        self.btn_tomar.clicked.connect(self._tomar_foto)
 
         btn_row.addWidget(self.btn_cargar)
         btn_row.addWidget(self.btn_tomar)
@@ -182,6 +182,27 @@ class AnguloFotoWidget(QWidget):
         self.lbl_imagen.setPixmap(pixmap)
         self.stack.setCurrentIndex(1)
         self._set_panel_style(vacio=False)
+
+    def _tomar_foto(self):
+        """Abre el diálogo modal de la cámara web, y si captura una foto, la carga."""
+        from ui.camara_dialog import CamaraDialog
+        dialog = CamaraDialog(titulo=f"Capturar Fotografía - {self.titulo}", parent=self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            bytes_img = dialog.get_image_bytes()
+            if bytes_img:
+                self._imagen_bytes = bytes_img
+                
+                # Cargar la imagen en la previsualización
+                pixmap = QPixmap()
+                pixmap.loadFromData(bytes_img)
+                pixmap = pixmap.scaled(
+                    190, 160,
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation
+                )
+                self.lbl_imagen.setPixmap(pixmap)
+                self.stack.setCurrentIndex(1)
+                self._set_panel_style(vacio=False)
 
     def _borrar_foto(self):
         """Elimina la imagen cargada y vuelve al estado vacío."""
