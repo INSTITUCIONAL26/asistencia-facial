@@ -41,7 +41,8 @@ class CameraThread(QThread):
 
                 for (x, y, w, h) in faces:
                     center_x, center_y = x + w // 2, y + h // 2
-                    axes = (w // 2, h // 2)
+                    # Agrandar el óvalo un 35% a los costados y 45% arriba/abajo para que sea más holgado
+                    axes = (int((w // 2) * 1.35), int((h // 2) * 1.45))
                     cv2.ellipse(frame_rgb, (center_x, center_y), axes, 0, 0, 360, (0, 255, 0), 2)
 
                 if len(faces) == 0 and not self._is_processing:
