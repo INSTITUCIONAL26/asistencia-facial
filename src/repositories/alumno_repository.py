@@ -79,3 +79,19 @@ class AlumnoRepository:
             with conn.cursor() as cur:
                 cur.execute(query, (alumno_id, angulo, imagen_bytes))
             conn.commit()
+
+    def obtener_todas_las_fotos(self):
+        """
+        Retorna todas las fotos guardadas en la base de datos para la verificación.
+        Retorna una lista de tuplas: (alumno_id, angulo, imagen_bytes).
+        """
+        query = """
+        SELECT alumno_id, angulo, imagen
+        FROM foto_alumno;
+        """
+        fotos = []
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(query)
+                fotos = cur.fetchall()
+        return fotos
