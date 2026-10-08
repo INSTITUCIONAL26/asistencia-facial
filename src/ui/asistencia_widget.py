@@ -2,7 +2,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QFrame, QMessageBox
 )
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import Qt, QSize, QTime
 from PySide6.QtGui import QIcon
 
 
@@ -112,9 +112,30 @@ class AsistenciaWidget(QWidget):
 
         # Jornada OK —> iniciar el CameraThread
         from ui.camera_thread import CameraThread
+        from ai.reconocimiento_thread import ReconocimientoThread
+        from repositories.asistencia_repository import AsistenciaRepository
+
+        if not hasattr(self, 'asistencia_repo'):
+            self.asistencia_repo = AsistenciaRepository()
+
+        if not hasattr(self, 'reconocimiento_thread') or self.reconocimiento_thread is None:
+            self.reconocimiento_thread = ReconocimientoThread(self)
+            self.reconocimiento_thread.match_found.connect(self._procesar_match)
+            self.reconocimiento_thread.match_failed.connect(self._procesar_rechazo)
+
         if not hasattr(self, 'camera_thread') or self.camera_thread is None:
             self.camera_thread = CameraThread(camera_index=0)
             self.camera_thread.frame_captured.connect(self._actualizar_frame_camara)
+            
+            # Conectar la cámara con la IA
+            self.camera_thread.face_to_recognize.connect(self.reconocimiento_thread.set_face_crop)
+            self.camera_thread.face_to_recognize.connect(self.reconocimiento_thread.start)
+            
+            # Al terminar la IA, desbloqueamos la cámara
+            self.reconocimiento_thread.finished_processing.connect(
+                lambda: self.camera_thread.set_processing(False)
+            )
+
             self.camera_thread.start()
 
         self._camara_abierta = True
@@ -122,6 +143,43 @@ class AsistenciaWidget(QWidget):
         self.btn_camara.setIcon(QIcon("src/ui/assets/square.svg"))
         self.btn_camara.setStyleSheet(self._estilo_btn_cerrar())
         self.lbl_estado_camara.hide()
+
+    def _procesar_match(self, alumno_id, distancia):
+        """Regla de Negocio: 5 minutos de tolerancia para marcar salida."""
+        jornada_id = self.jornada_widget.jornada_id
+        if jornada_id is None:
+            return
+
+        asistencia = self.asistencia_repo.obtener_asistencia_activa(alumno_id, jornada_id)
+        
+        if asistencia is None:
+            # 1. Primer Reconocimiento -> Entrada
+            self.asistencia_repo.registrar_entrada(alumno_id, jornada_id)
+            QMessageBox.information(self, "Match Exitoso", f"Entrada registrada (ID: {alumno_id})")
+        else:
+            asist_id, entrada, salida = asistencia
+            if salida is not None:
+                # Ya registró salida
+                return
+            
+            # 2. Evaluar tiempo de salida (tolerancia 5 mins antes del horario configurado)
+            hora_salida_jornada = self.jornada_widget.salida_edit.time()
+            ahora = QTime.currentTime()
+            
+            # Segundos entre ahora y la hora de salida de la jornada
+            segundos_diff = ahora.secsTo(hora_salida_jornada)
+            
+            # Si faltan 5 minutos (300 segundos) o menos, O si ya pasó la hora -> Puede Salir
+            if segundos_diff <= 300:
+                self.asistencia_repo.registrar_salida(asist_id)
+                QMessageBox.information(self, "Match Exitoso", f"Salida registrada (ID: {alumno_id})")
+            else:
+                QMessageBox.warning(self, "Aviso", f"Entrada ya registrada. Espere a su horario de salida.")
+
+    def _procesar_rechazo(self):
+        """Lógica opcional: qué hacer si el rostro no hace match."""
+        # Podría mostrar un pequeño popup que se auto-cierre, o simplemente ignorarlo.
+        pass
 
     def _actualizar_frame_camara(self, qt_image):
         from PySide6.QtGui import QPixmap
