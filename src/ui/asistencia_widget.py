@@ -198,6 +198,8 @@ class AsistenciaWidget(QWidget):
         self.lbl_val_estado.setText(texto)
         if "Procesando" in texto:
             self.lbl_val_estado.setStyleSheet("color: #f1c40f; font-size: 14px; font-weight: bold; border: none;")
+        elif "Exitosamente" in texto:
+            self.lbl_val_estado.setStyleSheet("color: #2ecc71; font-size: 14px; font-weight: bold; border: none;")
         else:
             self.lbl_val_estado.setStyleSheet("color: #ecf0f1; font-size: 14px; border: none;")
 

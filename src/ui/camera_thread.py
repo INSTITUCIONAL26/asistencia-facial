@@ -45,48 +45,55 @@ class CameraThread(QThread):
             ret, frame = self.capture.read()
             if ret:
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                # Aumentamos minNeighbors a 8 y minSize a 120x120 para evitar falsos positivos (como el cuello)
                 faces = self.face_cascade.detectMultiScale(
-                    gray, scaleFactor=1.1, minNeighbors=5, minSize=(100, 100)
+                    gray, scaleFactor=1.1, minNeighbors=8, minSize=(120, 120)
                 )
                 frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+                # Flag visual para saber si mostrar verde o rojo
+                is_match = time.time() < self._green_until
 
                 for (x, y, w, h) in faces:
                     center_x, center_y = x + w // 2, y + h // 2
                     axes = (int((w // 2) * 1.35), int((h // 2) * 1.45))
                     
-                    # Color rojo por defecto, verde si hubo match reciente
-                    if time.time() < self._green_until:
+                    if is_match:
                         color = (0, 255, 0)  # Verde
                     else:
-                        color = (255, 0, 0)  # Rojo en RGB (Pyside usa QImage.Format_RGB888)
+                        color = (255, 0, 0)  # Rojo en RGB
 
                     cv2.ellipse(frame_rgb, (center_x, center_y), axes, 0, 0, 360, color, 3)
 
-                if len(faces) == 0 and not self._is_processing:
-                    self._emitir_estado("Esperando rostro...")
-                elif len(faces) > 1 and not self._is_processing:
-                    self._emitir_estado("Más de un rostro detectado")
-                elif len(faces) == 1 and not self._is_processing:
-                    current_time = time.time()
-                    if current_time - self._last_recognition_time >= self._recon_interval:
-                        self._last_recognition_time = current_time
-                        self._is_processing = True
-                        
-                        self._emitir_estado("Procesando reconocimiento facial...")
-                        
-                        x, y, w, h = faces[0]
-                        # Darle un pequeño margen (10%) al recorte para que DeepFace vea el rostro completo
-                        margin_x = int(w * 0.1)
-                        margin_y = int(h * 0.1)
-                        x1 = max(0, x - margin_x)
-                        y1 = max(0, y - margin_y)
-                        x2 = min(frame.shape[1], x + w + margin_x)
-                        y2 = min(frame.shape[0], y + h + margin_y)
-                        
-                        # Extraer en BGR (formato original de OpenCV) que es lo que espera DeepFace
-                        face_crop_bgr = frame[y1:y2, x1:x2].copy()
-                        
-                        self.face_to_recognize.emit(face_crop_bgr)
+                if not self._is_processing:
+                    if len(faces) == 0:
+                        self._emitir_estado("Esperando rostro...")
+                    elif len(faces) > 1:
+                        self._emitir_estado("Más de un rostro detectado")
+                    elif len(faces) == 1:
+                        current_time = time.time()
+                        if current_time - self._last_recognition_time >= self._recon_interval:
+                            self._last_recognition_time = current_time
+                            self._is_processing = True
+                            
+                            self._emitir_estado("Procesando reconocimiento facial...")
+                            
+                            x, y, w, h = faces[0]
+                            margin_x = int(w * 0.1)
+                            margin_y = int(h * 0.1)
+                            x1 = max(0, x - margin_x)
+                            y1 = max(0, y - margin_y)
+                            x2 = min(frame.shape[1], x + w + margin_x)
+                            y2 = min(frame.shape[0], y + h + margin_y)
+                            
+                            face_crop_bgr = frame[y1:y2, x1:x2].copy()
+                            self.face_to_recognize.emit(face_crop_bgr)
+                        else:
+                            # Cooldown: avisamos qué está pasando visualmente
+                            if is_match:
+                                self._emitir_estado("¡Rostro Reconocido Exitosamente!")
+                            else:
+                                self._emitir_estado("Enfocando rostro (Espera de seguridad)...")
 
                 h_img, w_img, ch = frame_rgb.shape
                 bytes_per_line = ch * w_img
