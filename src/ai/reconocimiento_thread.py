@@ -24,29 +24,32 @@ class ReconocimientoThread(QThread):
         self.threshold = 0.40
         self.face_crop = None
         
-        # Caché de embeddings: dict -> alumno_id: [{'angulo': angulo, 'embedding': [vector]}]
         self.embeddings_cache = {}
-        self._cache_cargado = False
+        self._num_fotos_cacheadas = 0
+        self._is_warmup = False
+
+    def start_warmup(self):
+        """Inicia la carga de la BD y de los pesos de la IA en segundo plano."""
+        self._is_warmup = True
+        self.start()
 
     def cargar_cache_si_es_necesario(self):
-        """Carga y procesa las imágenes de la BD una sola vez para no colapsar el sistema."""
-        if self._cache_cargado:
-            return
-
-        print("[DeepFace] Cargando y procesando base de datos de rostros...")
+        """Carga y procesa las imágenes de la BD solo si hubo cambios."""
         fotos = self.alumno_repo.obtener_todas_las_fotos()
         
-        # Limpiar caché previo por si se agregaron nuevos alumnos (evita carga exponencial)
+        # Si la cantidad de fotos no cambió, no recargamos nada (Velocidad instantánea)
+        if len(fotos) == self._num_fotos_cacheadas and self._num_fotos_cacheadas > 0:
+            return
+
+        print(f"[DeepFace] Cargando base de datos ({len(fotos)} fotos detectadas)...")
         self.embeddings_cache = {}
+        self._num_fotos_cacheadas = len(fotos)
         
         for alumno_id, angulo, imagen_bytes in fotos:
-            # Convertir bytes a numpy array
             nparr = np.frombuffer(imagen_bytes, np.uint8)
-            # IMREAD_COLOR carga en formato BGR, que es el formato nativo que DeepFace espera
             img_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             
             try:
-                # Extraer embedding (enforce_detection=False porque asumimos que la BD ya tiene rostros válidos)
                 result = DeepFace.represent(img_path=img_bgr, model_name=self.model_name, enforce_detection=False)
                 embedding = result[0]["embedding"]
                 
@@ -60,7 +63,6 @@ class ReconocimientoThread(QThread):
             except Exception as e:
                 print(f"[DeepFace] Error procesando BD para alumno {alumno_id}: {e}")
 
-        self._cache_cargado = True
         print("[DeepFace] Caché listo.")
 
     def set_face_crop(self, crop: np.ndarray):
@@ -69,11 +71,24 @@ class ReconocimientoThread(QThread):
 
     def run(self):
         """Lógica pesada de DeepFace que corre en segundo plano."""
+        # --- MODO WARMUP (PRECARGA EN SEGUNDO PLANO) ---
+        if getattr(self, '_is_warmup', False):
+            self.cargar_cache_si_es_necesario()
+            try:
+                # Disparo en vacío para pre-calentar los tensores de TensorFlow/Keras
+                dummy = np.zeros((100, 100, 3), dtype=np.uint8)
+                DeepFace.represent(img_path=dummy, model_name=self.model_name, enforce_detection=False)
+            except:
+                pass
+            self._is_warmup = False
+            self.finished_processing.emit()
+            return
+            
+        # --- MODO RECONOCIMIENTO NORMAL ---
         if self.face_crop is None:
             self.finished_processing.emit()
             return
 
-        # 1. Cargar caché de BD (Solo demora la primera vez)
         self.cargar_cache_si_es_necesario()
 
         try:

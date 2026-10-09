@@ -163,9 +163,11 @@ class AsistenciaWidget(QWidget):
             self.reconocimiento_thread = ReconocimientoThread(self)
             self.reconocimiento_thread.match_found.connect(self._procesar_match)
             self.reconocimiento_thread.match_failed.connect(self._procesar_rechazo)
+            # Iniciamos la pre-carga (Warmup) de los pesos e imágenes en segundo plano silenciosamente
+            self.reconocimiento_thread.start_warmup()
         else:
-            # Forzar recarga de la BD por si se registraron alumnos nuevos mientras la cámara estaba cerrada
-            self.reconocimiento_thread._cache_cargado = False
+            # Si ya existía, enviamos un warmup rápido (solo cargará BD si se detectan fotos nuevas)
+            self.reconocimiento_thread.start_warmup()
 
         if not hasattr(self, 'camera_thread') or self.camera_thread is None:
             self.camera_thread = CameraThread(camera_index=0)
