@@ -163,6 +163,9 @@ class AsistenciaWidget(QWidget):
             self.reconocimiento_thread = ReconocimientoThread(self)
             self.reconocimiento_thread.match_found.connect(self._procesar_match)
             self.reconocimiento_thread.match_failed.connect(self._procesar_rechazo)
+        else:
+            # Forzar recarga de la BD por si se registraron alumnos nuevos mientras la cámara estaba cerrada
+            self.reconocimiento_thread._cache_cargado = False
 
         if not hasattr(self, 'camera_thread') or self.camera_thread is None:
             self.camera_thread = CameraThread(camera_index=0)
@@ -199,6 +202,10 @@ class AsistenciaWidget(QWidget):
     def _procesar_match(self, alumno_id, distancia):
         self._actualizar_datos_modelo(alumno_id, distancia, color_id="#2ecc71", color_dist="#2ecc71")
         
+        # Pintar el óvalo de verde por 2 segundos
+        if hasattr(self, 'camera_thread') and self.camera_thread is not None:
+            self.camera_thread.set_match_success()
+            
         jornada_id = self.jornada_widget.jornada_id
         if jornada_id is None:
             return

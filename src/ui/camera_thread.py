@@ -25,6 +25,17 @@ class CameraThread(QThread):
         self._is_processing = False
         self._last_recognition_time = 0.0
         self._recon_interval = 2.0  
+        self._current_status = ""
+        self._green_until = 0.0
+
+    def set_match_success(self):
+        """Pone el óvalo en verde por 2 segundos."""
+        self._green_until = time.time() + 2.0
+
+    def _emitir_estado(self, texto):
+        if self._current_status != texto:
+            self._current_status = texto
+            self.status_update.emit(texto)
 
     def run(self):
         self._is_running = True
@@ -41,21 +52,27 @@ class CameraThread(QThread):
 
                 for (x, y, w, h) in faces:
                     center_x, center_y = x + w // 2, y + h // 2
-                    # Agrandar el óvalo un 35% a los costados y 45% arriba/abajo para que sea más holgado
                     axes = (int((w // 2) * 1.35), int((h // 2) * 1.45))
-                    cv2.ellipse(frame_rgb, (center_x, center_y), axes, 0, 0, 360, (0, 255, 0), 2)
+                    
+                    # Color rojo por defecto, verde si hubo match reciente
+                    if time.time() < self._green_until:
+                        color = (0, 255, 0)  # Verde
+                    else:
+                        color = (255, 0, 0)  # Rojo en RGB (Pyside usa QImage.Format_RGB888)
+
+                    cv2.ellipse(frame_rgb, (center_x, center_y), axes, 0, 0, 360, color, 3)
 
                 if len(faces) == 0 and not self._is_processing:
-                    self.status_update.emit("Esperando rostro...")
+                    self._emitir_estado("Esperando rostro...")
                 elif len(faces) > 1 and not self._is_processing:
-                    self.status_update.emit("Más de un rostro detectado")
+                    self._emitir_estado("Más de un rostro detectado")
                 elif len(faces) == 1 and not self._is_processing:
                     current_time = time.time()
                     if current_time - self._last_recognition_time >= self._recon_interval:
                         self._last_recognition_time = current_time
                         self._is_processing = True
                         
-                        self.status_update.emit("Procesando reconocimiento facial...")
+                        self._emitir_estado("Procesando reconocimiento facial...")
                         
                         x, y, w, h = faces[0]
                         face_crop = frame_rgb[y:y+h, x:x+w].copy()
