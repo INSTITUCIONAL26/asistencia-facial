@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout,
-    QPushButton, QLabel, QFrame, QMessageBox
+    QPushButton, QLabel, QFrame, QMessageBox, QGridLayout
 )
 from PySide6.QtCore import Qt, QSize, QTime
 from PySide6.QtGui import QIcon
@@ -25,12 +25,12 @@ class AsistenciaWidget(QWidget):
 
         outer = QVBoxLayout(self)
         outer.setContentsMargins(60, 40, 60, 40)
-        outer.setSpacing(20)
+        outer.setSpacing(15)
 
         title_card = QFrame()
         title_card.setStyleSheet("background-color: transparent; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);")
         title_layout = QVBoxLayout(title_card)
-        title_layout.setContentsMargins(36, 32, 36, 32)
+        title_layout.setContentsMargins(36, 16, 36, 16)
         title = QLabel("Asistencia por Captura Facial")
         title.setStyleSheet("font-size: 20px; font-weight: bold; color: white; border: none;")
         title_layout.addWidget(title)
@@ -71,15 +71,70 @@ class AsistenciaWidget(QWidget):
 
         outer.addWidget(self.panel_video)
 
-        # Label de Feedback inferior (Reemplaza a QMessageBox)
-        self.lbl_feedback = QLabel("Cámara cerrada")
-        self.lbl_feedback.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_feedback.setStyleSheet("color: #7f8c8d; font-size: 16px; font-weight: bold; border: none;")
-        outer.addWidget(self.lbl_feedback)
+        # Panel de Información Detallada (Dashboard de Reconocimiento)
+        self.panel_info = QFrame()
+        self.panel_info.setStyleSheet("""
+            QFrame {
+                background-color: rgba(0, 0, 0, 0.2);
+                border-radius: 6px;
+                border: 1px solid rgba(255, 255, 255, 0.05);
+            }
+        """)
+        grid_info = QGridLayout(self.panel_info)
+        grid_info.setContentsMargins(20, 15, 20, 15)
+        
+        # Labels estáticos
+        l1 = QLabel("Estado Visual:")
+        l2 = QLabel("ID Reconocido:")
+        l3 = QLabel("Distancia (<=0.40):")
+        l4 = QLabel("Acción en BD:")
+        
+        for l in [l1, l2, l3, l4]:
+            l.setStyleSheet("color: #a0a0a0; font-size: 14px; font-weight: bold; border: none;")
 
-    def _actualizar_feedback(self, texto, color="#0d6efd"):
-        self.lbl_feedback.setText(texto)
-        self.lbl_feedback.setStyleSheet(f"color: {color}; font-size: 16px; font-weight: bold; border: none;")
+        # Labels dinámicos
+        self.lbl_val_estado = QLabel("Cámara cerrada")
+        self.lbl_val_id = QLabel("-")
+        self.lbl_val_distancia = QLabel("-")
+        self.lbl_val_accion = QLabel("-")
+        
+        for l in [self.lbl_val_estado, self.lbl_val_id, self.lbl_val_distancia, self.lbl_val_accion]:
+            l.setStyleSheet("color: #ecf0f1; font-size: 14px; border: none;")
+
+        grid_info.addWidget(l1, 0, 0)
+        grid_info.addWidget(self.lbl_val_estado, 0, 1)
+        
+        grid_info.addWidget(l2, 1, 0)
+        grid_info.addWidget(self.lbl_val_id, 1, 1)
+        
+        grid_info.addWidget(l3, 2, 0)
+        grid_info.addWidget(self.lbl_val_distancia, 2, 1)
+        
+        grid_info.addWidget(l4, 3, 0)
+        grid_info.addWidget(self.lbl_val_accion, 3, 1)
+        
+        # Ajustar anchos
+        grid_info.setColumnStretch(1, 1)
+
+        outer.addWidget(self.panel_info)
+        outer.addStretch()
+
+    def _actualizar_datos_modelo(self, alumno_id, distancia, color_id="#ecf0f1", color_dist="#ecf0f1"):
+        """Actualiza los labels de ID y distancia."""
+        self.lbl_val_id.setText(str(alumno_id) if alumno_id else "-")
+        self.lbl_val_id.setStyleSheet(f"color: {color_id}; font-size: 14px; font-weight: bold; border: none;")
+        
+        if distancia is not None:
+            self.lbl_val_distancia.setText(f"{distancia:.4f}")
+            self.lbl_val_distancia.setStyleSheet(f"color: {color_dist}; font-size: 14px; font-weight: bold; border: none;")
+        else:
+            self.lbl_val_distancia.setText("-")
+            self.lbl_val_distancia.setStyleSheet("color: #ecf0f1; font-size: 14px; border: none;")
+
+    def _actualizar_accion(self, texto, color="#0d6efd"):
+        """Actualiza la acción realizada en base de datos."""
+        self.lbl_val_accion.setText(texto)
+        self.lbl_val_accion.setStyleSheet(f"color: {color}; font-size: 14px; font-weight: bold; border: none;")
 
     def _toggle_camara(self):
         if not self._camara_abierta:
@@ -128,14 +183,22 @@ class AsistenciaWidget(QWidget):
         self.btn_camara.setIcon(QIcon("src/ui/assets/square.svg"))
         self.btn_camara.setStyleSheet(self._estilo_btn_cerrar())
         self.lbl_estado_camara.hide()
-        self._actualizar_feedback("Esperando rostro...", "#f1c40f")
+        
+        self.lbl_val_estado.setText("Inicializando...")
+        self._actualizar_datos_modelo("-", None)
+        self._actualizar_accion("-")
 
     def _actualizar_estado_camara(self, texto):
-        # Evitar sobreescribir los mensajes de reconocimiento persistentes si la IA está activa
-        if not self.reconocimiento_thread.isRunning():
-            self._actualizar_feedback(texto, "#f1c40f")
+        # Evitar sobreescribir el estado "Procesando"
+        self.lbl_val_estado.setText(texto)
+        if "Procesando" in texto:
+            self.lbl_val_estado.setStyleSheet("color: #f1c40f; font-size: 14px; font-weight: bold; border: none;")
+        else:
+            self.lbl_val_estado.setStyleSheet("color: #ecf0f1; font-size: 14px; border: none;")
 
     def _procesar_match(self, alumno_id, distancia):
+        self._actualizar_datos_modelo(alumno_id, distancia, color_id="#2ecc71", color_dist="#2ecc71")
+        
         jornada_id = self.jornada_widget.jornada_id
         if jornada_id is None:
             return
@@ -144,11 +207,11 @@ class AsistenciaWidget(QWidget):
         
         if asistencia is None:
             self.asistencia_repo.registrar_entrada(alumno_id, jornada_id)
-            self._actualizar_feedback(f"Entrada registrada (ID: {alumno_id})", "#2ecc71")
+            self._actualizar_accion(f"Entrada registrada", "#2ecc71")
         else:
             asist_id, entrada, salida = asistencia
             if salida is not None:
-                self._actualizar_feedback("Entrada y salida ya registradas para esa Jornada.", "#3498db")
+                self._actualizar_accion("Asistencia completada (Entrada y Salida)", "#3498db")
                 return
             
             hora_salida_jornada = self.jornada_widget.salida_edit.time()
@@ -157,12 +220,13 @@ class AsistenciaWidget(QWidget):
             
             if segundos_diff <= 300:
                 self.asistencia_repo.registrar_salida(asist_id)
-                self._actualizar_feedback(f"Salida registrada (ID: {alumno_id})", "#2ecc71")
+                self._actualizar_accion(f"Salida registrada", "#2ecc71")
             else:
-                self._actualizar_feedback("Entrada ya registrada; todavía no puede registrar salida.", "#e67e22")
+                self._actualizar_accion("Esperando horario de salida", "#e67e22")
 
-    def _procesar_rechazo(self):
-        self._actualizar_feedback("Rostro no reconocido", "#e74c3c")
+    def _procesar_rechazo(self, distancia):
+        self._actualizar_datos_modelo("Desconocido", distancia, color_id="#e74c3c", color_dist="#e74c3c")
+        self._actualizar_accion("Rostro no reconocido (ignorado)", "#e74c3c")
 
     def _actualizar_frame_camara(self, qt_image):
         from PySide6.QtGui import QPixmap
@@ -190,7 +254,11 @@ class AsistenciaWidget(QWidget):
             "color: #7f8c8d; font-size: 15px; border: none;"
         )
         self.lbl_estado_camara.show()
-        self._actualizar_feedback("Cámara cerrada", "#7f8c8d")
+        
+        self.lbl_val_estado.setText("Cámara cerrada")
+        self.lbl_val_estado.setStyleSheet("color: #ecf0f1; font-size: 14px; border: none;")
+        self._actualizar_datos_modelo("-", None)
+        self._actualizar_accion("-")
 
     def hideEvent(self, event):
         if self._camara_abierta:

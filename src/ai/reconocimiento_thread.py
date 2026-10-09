@@ -14,7 +14,7 @@ class ReconocimientoThread(QThread):
     """
     # Señales que emitirá hacia la UI
     match_found = Signal(int, float)  # (alumno_id, distancia)
-    match_failed = Signal()
+    match_failed = Signal(float)      # (mejor_distancia)
     finished_processing = Signal()    # Para que la cámara vuelva a capturar
 
     def __init__(self, parent=None):
@@ -103,11 +103,11 @@ class ReconocimientoThread(QThread):
                 self.match_found.emit(mejor_alumno_id, float(mejor_distancia))
             else:
                 print(f"[No Match] Mejor distancia fue: {mejor_distancia:.4f}")
-                self.match_failed.emit()
+                self.match_failed.emit(float(mejor_distancia))
 
         except Exception as e:
             print(f"[DeepFace] Error en inferencia: {e}")
-            self.match_failed.emit()
+            self.match_failed.emit(1.0)
         finally:
             self.face_crop = None
             self.finished_processing.emit()
