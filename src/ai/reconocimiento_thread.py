@@ -36,16 +36,18 @@ class ReconocimientoThread(QThread):
         print("[DeepFace] Cargando y procesando base de datos de rostros...")
         fotos = self.alumno_repo.obtener_todas_las_fotos()
         
+        # Limpiar caché previo por si se agregaron nuevos alumnos (evita carga exponencial)
+        self.embeddings_cache = {}
+        
         for alumno_id, angulo, imagen_bytes in fotos:
             # Convertir bytes a numpy array
             nparr = np.frombuffer(imagen_bytes, np.uint8)
-            img_np = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-            # Asegurar que esté en RGB
-            img_rgb = cv2.cvtColor(img_np, cv2.COLOR_BGR2RGB)
+            # IMREAD_COLOR carga en formato BGR, que es el formato nativo que DeepFace espera
+            img_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             
             try:
                 # Extraer embedding (enforce_detection=False porque asumimos que la BD ya tiene rostros válidos)
-                result = DeepFace.represent(img_path=img_rgb, model_name=self.model_name, enforce_detection=False)
+                result = DeepFace.represent(img_path=img_bgr, model_name=self.model_name, enforce_detection=False)
                 embedding = result[0]["embedding"]
                 
                 if alumno_id not in self.embeddings_cache:

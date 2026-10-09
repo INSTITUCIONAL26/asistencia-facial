@@ -75,9 +75,18 @@ class CameraThread(QThread):
                         self._emitir_estado("Procesando reconocimiento facial...")
                         
                         x, y, w, h = faces[0]
-                        face_crop = frame_rgb[y:y+h, x:x+w].copy()
+                        # Darle un pequeño margen (10%) al recorte para que DeepFace vea el rostro completo
+                        margin_x = int(w * 0.1)
+                        margin_y = int(h * 0.1)
+                        x1 = max(0, x - margin_x)
+                        y1 = max(0, y - margin_y)
+                        x2 = min(frame.shape[1], x + w + margin_x)
+                        y2 = min(frame.shape[0], y + h + margin_y)
                         
-                        self.face_to_recognize.emit(face_crop)
+                        # Extraer en BGR (formato original de OpenCV) que es lo que espera DeepFace
+                        face_crop_bgr = frame[y1:y2, x1:x2].copy()
+                        
+                        self.face_to_recognize.emit(face_crop_bgr)
 
                 h_img, w_img, ch = frame_rgb.shape
                 bytes_per_line = ch * w_img
