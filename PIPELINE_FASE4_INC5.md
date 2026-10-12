@@ -19,5 +19,16 @@ Se programó el árbol de decisiones exacto solicitado en el audio para proteger
 ## 3. Manejo de Errores Silencioso
 Si una persona que no está en la base de datos pasa por la cámara (o si el modelo devuelve una distancia $> 0.40$), el sistema ignora el evento de forma silenciosa para no interrumpir el flujo constante de estudiantes reales pasando por el molinete.
 
+## 4. Script de Limpieza y Reset de Base de Datos (PowerShell)
+Para realizar pruebas limpias desde cero sin perder las credenciales del usuario administrador, se utiliza la siguiente instrucción directa en PowerShell:
+
+```powershell
+.\.venv\Scripts\python.exe -c "import sys; sys.path.insert(0, 'src'); from config.database import get_connection; conn = get_connection(); cur = conn.cursor(); cur.execute('TRUNCATE TABLE asistencia, foto_alumno, alumno, jornada CASCADE;'); conn.commit(); print('¡Todos los registros de prueba fueron eliminados exitosamente!')"
+```
+
+> [!NOTE]
+> Este comando ejecuta `TRUNCATE CASCADE` exclusivamente sobre las tablas transaccionales (`asistencia`, `foto_alumno`, `alumno`, `jornada`), preservando intacta la tabla `usuario` para mantener el inicio de sesión.
+
 ## 🎉 ¡FIN DEL INCREMENTO 5!
 Con estas 4 fases terminadas, la aplicación es capaz de gestionar jornadas y realizar reconocimiento biométrico industrial en tiempo real con ventanas de tolerancia temporales, todo sin congelar la pantalla.
+
