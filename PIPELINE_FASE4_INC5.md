@@ -46,8 +46,22 @@ Se integró `VoiceService` (`pyttsx3` con voz nativa en español SAPI5) para bri
 - **Motor de Audio Persistente:**
   - El hilo de voz mantiene el objeto COM SAPI activo en memoria para garantizar salida de audio continua, sin recortes por garbage collection ni silencios posteriores.
 
+## 7. Módulo UX Avanzado: Carga Rápida de Horarios, Buscadores Inteligentes y Audio Ampliado
+- **Ingreso Rápido de Jornada:**
+  - Botones de 1-click para Entrada: `[Ahora]`, `[08:00]`, `[18:00]`.
+  - Botones de 1-click para Salida: `[+5 min]` (prueba instantánea de tolerancia), `[+1 h]`, `[+4 h]`.
+- **Buscador Inteligente de Cátedras:**
+  - Autocompletado con `QCompleter` (`MatchContains`) y menú emergente de selección con las 7 materias oficiales: *Analítica Web, Reconocimiento Visual, Minería de Datos, Proyectos, Prácticas Profesionalizantes, PNL, Ciberseguridad*.
+- **Buscador Inteligente de Fechas (Registrar Alumno):**
+  - Autocompletado y selección instantánea de Año de Nacimiento (1970–2010) sincronizado con el calendario.
+  - Autocompletado y selección de Año de Ingreso.
+- **Alertas de Voz Ampliadas:**
+  - Registro de Alumno: *"Alumno registrado correctamente."*
+  - Asistencia Facial: anuncia explícitamente el **ID** y la **Distancia Coseno (umbral)**: *"Entrada registrada. Alumno ID [X], distancia [Y]. Bienvenido, [Nombre]."*
+
 ## 🎉 ¡FIN DEL INCREMENTO 5!
-Con estas 4 fases terminadas, la síntesis de voz continua y la retícula biométrica de precisión, la aplicación alcanza estándar industrial robusto.
+Con estas 4 fases terminadas, la síntesis de voz continua, los accesos ultra-rápidos y la retícula biométrica de precisión, la aplicación alcanza estándar industrial robusto de 10 puntos.
+
 
 
 

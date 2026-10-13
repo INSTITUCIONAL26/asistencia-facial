@@ -57,29 +57,127 @@ class JornadaWidget(QWidget):
         self.fecha_label.setStyleSheet("font-size: 14px; color: white; padding: 6px 0; border: none;")
         self._add_row(card_layout, "Fecha", self.fecha_label)
 
+        from PySide6.QtWidgets import QCompleter, QMenu
+        self._quick_buttons = []
+
+        # Horario de entrada con botones de acceso rápido
+        row_entrada = QHBoxLayout()
+        row_entrada.setSpacing(8)
+
         self.entrada_edit = QTimeEdit()
         self.entrada_edit.setDisplayFormat("HH:mm")
         self.entrada_edit.setSpecialValueText("--:--")
         self.entrada_edit.setTime(self.entrada_edit.minimumTime())
-        self.entrada_edit.setFixedWidth(130)
+        self.entrada_edit.setFixedWidth(110)
         self.entrada_edit.setStyleSheet(self._time_edit_style())
         self.entrada_edit.timeChanged.connect(self._on_entrada_changed)
-        self._add_row(card_layout, "Horario de entrada", self.entrada_edit)
+        row_entrada.addWidget(self.entrada_edit)
+
+        # Botones rápidos para entrada
+        btn_ent_ahora = self._crear_btn_rapido("Ahora", lambda: self.entrada_edit.setTime(QTime.currentTime()))
+        btn_ent_08 = self._crear_btn_rapido("08:00", lambda: self.entrada_edit.setTime(QTime(8, 0)))
+        btn_ent_18 = self._crear_btn_rapido("18:00", lambda: self.entrada_edit.setTime(QTime(18, 0)))
+        for b in [btn_ent_ahora, btn_ent_08, btn_ent_18]:
+            row_entrada.addWidget(b)
+            self._quick_buttons.append(b)
+
+        row_entrada.addStretch()
+        self._add_row(card_layout, "Horario de entrada", row_entrada)
+
+        # Horario de salida con botones de acceso rápido
+        row_salida = QHBoxLayout()
+        row_salida.setSpacing(8)
 
         self.salida_edit = QTimeEdit()
         self.salida_edit.setDisplayFormat("HH:mm")
         self.salida_edit.setSpecialValueText("--:--")
         self.salida_edit.setTime(self.salida_edit.minimumTime())
-        self.salida_edit.setFixedWidth(130)
+        self.salida_edit.setFixedWidth(110)
         self.salida_edit.setStyleSheet(self._time_edit_style())
         self.salida_edit.timeChanged.connect(self._on_salida_changed)
-        self._add_row(card_layout, "Horario de salida", self.salida_edit)
+        row_salida.addWidget(self.salida_edit)
+
+        # Botones rápidos para salida (calcular respecto a entrada o tiempo actual)
+        def _set_salida_offset(secs):
+            base_time = self.entrada_edit.time() if self._entrada_configurada else QTime.currentTime()
+            self.salida_edit.setTime(base_time.addSecs(secs))
+
+        btn_sal_5m = self._crear_btn_rapido("+5 min", lambda: _set_salida_offset(300))
+        btn_sal_1h = self._crear_btn_rapido("+1 h", lambda: _set_salida_offset(3600))
+        btn_sal_4h = self._crear_btn_rapido("+4 h", lambda: _set_salida_offset(14400))
+        for b in [btn_sal_5m, btn_sal_1h, btn_sal_4h]:
+            row_salida.addWidget(b)
+            self._quick_buttons.append(b)
+
+        row_salida.addStretch()
+        self._add_row(card_layout, "Horario de salida", row_salida)
+
+        # Cátedra con buscador inteligente y autocompletado
+        row_catedra = QHBoxLayout()
+        row_catedra.setSpacing(8)
 
         self.catedra_input = QLineEdit()
-        self.catedra_input.setPlaceholderText("Nombre de la cátedra")
+        self.catedra_input.setPlaceholderText("Buscar o escribir cátedra...")
         self.catedra_input.setStyleSheet(self._input_style())
         self.catedra_input.textChanged.connect(self._verificar_cambio_estado)
-        self._add_row(card_layout, "Cátedra", self.catedra_input)
+
+        materias = [
+            "Analítica Web",
+            "Reconocimiento Visual",
+            "Minería de Datos",
+            "Proyectos",
+            "Prácticas Profesionalizantes",
+            "PNL",
+            "Ciberseguridad"
+        ]
+        completer = QCompleter(materias, self)
+        completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        completer.setFilterMode(Qt.MatchFlag.MatchContains)
+        self.catedra_input.setCompleter(completer)
+        row_catedra.addWidget(self.catedra_input)
+
+        # Botón menú de selección rápida de materias
+        btn_sugerencias = QPushButton(" ▾ Materias ")
+        btn_sugerencias.setFixedHeight(34)
+        btn_sugerencias.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_sugerencias.setStyleSheet("""
+            QPushButton {
+                background-color: rgba(255, 255, 255, 0.08);
+                color: #e0e0e0;
+                border: 1px solid #555;
+                border-radius: 4px;
+                padding: 4px 12px;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 255, 255, 0.15);
+            }
+        """)
+        menu_materias = QMenu(self)
+        menu_materias.setStyleSheet("""
+            QMenu {
+                background-color: #1e1e1e;
+                color: white;
+                border: 1px solid #555;
+                padding: 4px;
+            }
+            QMenu::item {
+                padding: 6px 20px;
+                font-size: 13px;
+            }
+            QMenu::item:selected {
+                background-color: #0d6efd;
+            }
+        """)
+        for m in materias:
+            action = menu_materias.addAction(m)
+            action.triggered.connect(lambda checked=False, mat=m: self.catedra_input.setText(mat))
+
+        btn_sugerencias.setMenu(menu_materias)
+        row_catedra.addWidget(btn_sugerencias)
+        self._quick_buttons.append(btn_sugerencias)
+
+        self._add_row(card_layout, "Cátedra", row_catedra)
 
         # Botones de Acción
         btn_layout = QHBoxLayout()
@@ -152,12 +250,42 @@ class JornadaWidget(QWidget):
     def _danger_btn_style():
         return "QPushButton { background-color: #dc3545; color: white; padding: 8px 16px; border-radius: 4px; font-weight: bold; border: none; } QPushButton:hover { background-color: #c82333; }"
 
+    def _crear_btn_rapido(self, texto, callback):
+        btn = QPushButton(texto)
+        btn.setFixedHeight(28)
+        btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn.setStyleSheet("""
+            QPushButton {
+                background-color: rgba(13, 110, 253, 0.15);
+                color: #70a1ff;
+                border: 1px solid #0d6efd;
+                border-radius: 4px;
+                padding: 2px 10px;
+                font-size: 11px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #0d6efd;
+                color: white;
+            }
+            QPushButton:disabled {
+                border-color: #444;
+                color: #666;
+                background-color: transparent;
+            }
+        """)
+        btn.clicked.connect(callback)
+        return btn
+
     def _actualizar_ui_estado(self):
         """Actualiza la interfaz según si está en edición o guardada."""
         self.entrada_edit.setEnabled(self.en_edicion)
         self.salida_edit.setEnabled(self.en_edicion)
         self.catedra_input.setEnabled(self.en_edicion)
         
+        for b in getattr(self, '_quick_buttons', []):
+            b.setEnabled(self.en_edicion)
+
         self.btn_guardar.setVisible(self.en_edicion)
         self.btn_editar.setVisible(not self.en_edicion)
         self.btn_terminar.setVisible(not self.en_edicion)

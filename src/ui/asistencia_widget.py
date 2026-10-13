@@ -227,7 +227,7 @@ class AsistenciaWidget(QWidget):
         if asistencia is None:
             self.asistencia_repo.registrar_entrada(alumno_id, jornada_id)
             self._actualizar_accion(f"Entrada registrada", "#2ecc71")
-            voice_service.hablar(f"Entrada registrada. Bienvenido{saludo_nombre}.", cooldown=4.0)
+            voice_service.hablar(f"Entrada registrada. Alumno ID {alumno_id}, distancia {distancia:.2f}. Bienvenido{saludo_nombre}.", cooldown=4.0)
         else:
             asist_id, entrada, salida = asistencia
             if salida is not None:
@@ -242,7 +242,7 @@ class AsistenciaWidget(QWidget):
             if segundos_diff <= 300:
                 self.asistencia_repo.registrar_salida(asist_id)
                 self._actualizar_accion(f"Salida registrada", "#2ecc71")
-                voice_service.hablar(f"Salida registrada. Hasta luego{saludo_nombre}.", cooldown=4.0)
+                voice_service.hablar(f"Salida registrada. Alumno ID {alumno_id}, distancia {distancia:.2f}. Hasta luego{saludo_nombre}.", cooldown=4.0)
             else:
                 self._actualizar_accion("Esperando horario de salida", "#e67e22")
                 voice_service.hablar("Entrada ya registrada. Por favor, espere a su horario de salida.", cooldown=5.0)

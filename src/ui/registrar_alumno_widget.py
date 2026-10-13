@@ -3,7 +3,7 @@ from datetime import date
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
     QLabel, QLineEdit, QPushButton, QFrame,
-    QScrollArea, QDateEdit, QSpinBox,
+    QScrollArea, QDateEdit, QSpinBox, QComboBox, QCompleter,
     QFileDialog, QMessageBox, QSizePolicy, QStackedWidget, QDialog
 )
 from PySide6.QtCore import Qt, QDate, QRegularExpression, QSize
@@ -367,24 +367,88 @@ class RegistrarAlumnoWidget(QWidget):
         self._add_grid_row(grid, 2, "Celular *", self.celular_input,
                                     "Correo Electrónico *", self.correo_input)
 
-        # Fila 3 — Fecha nac. / Año ingreso
+        # Fila 3 — Fecha nac. / Año ingreso (con buscadores inteligentes)
+        w_fnac = QWidget()
+        row_fnac = QHBoxLayout(w_fnac)
+        row_fnac.setContentsMargins(0, 0, 0, 0)
+        row_fnac.setSpacing(6)
+
         self.fecha_nac_edit = QDateEdit()
         self.fecha_nac_edit.setCalendarPopup(True)
         self.fecha_nac_edit.setDisplayFormat("dd/MM/yyyy")
         self.fecha_nac_edit.setDate(QDate(2000, 1, 1))
         self.fecha_nac_edit.setFixedHeight(36)
-        self.fecha_nac_edit.setMinimumWidth(130)
+        self.fecha_nac_edit.setMinimumWidth(115)
         self.fecha_nac_edit.setStyleSheet(self._date_edit_style())
+        row_fnac.addWidget(self.fecha_nac_edit)
+
+        # Buscador inteligente de año de nacimiento
+        self.combo_anio_nac = QComboBox()
+        self.combo_anio_nac.setEditable(True)
+        self.combo_anio_nac.setFixedHeight(36)
+        self.combo_anio_nac.setFixedWidth(85)
+        self.combo_anio_nac.setStyleSheet(self._combo_style())
+        anios_nac = [str(y) for y in range(2010, 1969, -1)]
+        self.combo_anio_nac.addItems(anios_nac)
+        self.combo_anio_nac.setCurrentText("2000")
+
+        comp_nac = QCompleter(anios_nac, self)
+        comp_nac.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        comp_nac.setFilterMode(Qt.MatchFlag.MatchContains)
+        self.combo_anio_nac.setCompleter(comp_nac)
+
+        def _on_anio_nac(txt):
+            try:
+                y = int(txt.strip())
+                if 1900 <= y <= 2100:
+                    d = self.fecha_nac_edit.date()
+                    self.fecha_nac_edit.setDate(QDate(y, d.month(), d.day()))
+            except:
+                pass
+        self.combo_anio_nac.currentTextChanged.connect(_on_anio_nac)
+        row_fnac.addWidget(self.combo_anio_nac)
+
+        # Año de ingreso con buscador inteligente
+        w_ingreso = QWidget()
+        row_ingreso = QHBoxLayout(w_ingreso)
+        row_ingreso.setContentsMargins(0, 0, 0, 0)
+        row_ingreso.setSpacing(6)
 
         self.anio_spin = QSpinBox()
         self.anio_spin.setRange(1900, 2100)
         self.anio_spin.setValue(date.today().year)
         self.anio_spin.setFixedHeight(36)
-        self.anio_spin.setMinimumWidth(100)
+        self.anio_spin.setMinimumWidth(80)
         self.anio_spin.setStyleSheet(self._spinbox_style())
+        row_ingreso.addWidget(self.anio_spin)
 
-        self._add_grid_row(grid, 3, "Fecha de Nacimiento *", self.fecha_nac_edit,
-                                    "Año de Ingreso *", self.anio_spin)
+        self.combo_anio_ing = QComboBox()
+        self.combo_anio_ing.setEditable(True)
+        self.combo_anio_ing.setFixedHeight(36)
+        self.combo_anio_ing.setFixedWidth(85)
+        self.combo_anio_ing.setStyleSheet(self._combo_style())
+        anios_ing = [str(y) for y in range(date.today().year, 1999, -1)]
+        self.combo_anio_ing.addItems(anios_ing)
+        self.combo_anio_ing.setCurrentText(str(date.today().year))
+
+        comp_ing = QCompleter(anios_ing, self)
+        comp_ing.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        comp_ing.setFilterMode(Qt.MatchFlag.MatchContains)
+        self.combo_anio_ing.setCompleter(comp_ing)
+
+        def _on_anio_ing(txt):
+            try:
+                y = int(txt.strip())
+                if 1900 <= y <= 2100:
+                    self.anio_spin.setValue(y)
+            except:
+                pass
+        self.combo_anio_ing.currentTextChanged.connect(_on_anio_ing)
+        self.anio_spin.valueChanged.connect(lambda val: self.combo_anio_ing.setCurrentText(str(val)))
+        row_ingreso.addWidget(self.combo_anio_ing)
+
+        self._add_grid_row(grid, 3, "Fecha de Nacimiento *", w_fnac,
+                                    "Año de Ingreso *", w_ingreso)
 
         # Fila 4 — Domicilio / Libreta
         self.domicilio_input = self._make_input("Calle y número")
@@ -483,6 +547,8 @@ class RegistrarAlumnoWidget(QWidget):
                 self.repo.guardar_foto(alumno_id, aw.angulo_key, aw.get_imagen_bytes())
 
             QMessageBox.information(self, "Éxito", "Alumno registrado correctamente.")
+            from services.voice_service import voice_service
+            voice_service.hablar("Alumno registrado correctamente.")
             self._limpiar()
 
         except Exception as e:
@@ -499,7 +565,11 @@ class RegistrarAlumnoWidget(QWidget):
                     self.domicilio_input, self.libreta_input]:
             inp.clear()
         self.fecha_nac_edit.setDate(QDate(2000, 1, 1))
+        if hasattr(self, 'combo_anio_nac'):
+            self.combo_anio_nac.setCurrentText("2000")
         self.anio_spin.setValue(date.today().year)
+        if hasattr(self, 'combo_anio_ing'):
+            self.combo_anio_ing.setCurrentText(str(date.today().year))
         for aw in [self.angulo_frontal, self.angulo_izquierdo, self.angulo_derecho]:
             aw.reset()
 
@@ -641,3 +711,34 @@ class RegistrarAlumnoWidget(QWidget):
         grid.addWidget(widget1, row, 1)
         grid.addWidget(l2,      row, 2)
         grid.addWidget(widget2, row, 3)
+
+    @staticmethod
+    def _combo_style() -> str:
+        return """
+            QComboBox {
+                padding: 4px 6px;
+                font-size: 13px;
+                color: white;
+                border: 1px solid #555;
+                border-radius: 5px;
+                background-color: transparent;
+            }
+            QComboBox::drop-down {
+                subcontrol-origin: border;
+                subcontrol-position: top right;
+                width: 18px;
+                border: none;
+            }
+            QComboBox::down-arrow {
+                image: url(src/ui/assets/chevron-down.svg);
+                width: 12px;
+                height: 12px;
+            }
+            QComboBox QAbstractItemView {
+                background-color: #1e1e1e;
+                color: white;
+                selection-background-color: #0d6efd;
+                selection-color: white;
+                border: 1px solid #555;
+            }
+        """
