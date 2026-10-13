@@ -217,7 +217,10 @@ class JornadaWidget(QWidget):
         label.setStyleSheet("font-size: 14px; color: #a0a0a0; border: none;")
         label.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         row.addWidget(label)
-        row.addWidget(widget)
+        if isinstance(widget, QWidget):
+            row.addWidget(widget)
+        else:
+            row.addLayout(widget)
         row.addStretch()
         layout.addLayout(row)
 
