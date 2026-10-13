@@ -75,22 +75,24 @@ class CameraThread(QThread):
                     is_centered = (dx < w_img * 0.18) and (dy < h_img * 0.20) and (w >= w_img * 0.20) and (w <= w_img * 0.75)
 
                     if is_match or is_centered:
-                        color = (0, 230, 115)       # Verde esmeralda (Encuadre perfecto)
-                        glow_color = (0, 255, 128)
+                        color = (0, 230, 115)       # Verde esmeralda (Encuadre calibrado)
                     else:
-                        color = (255, 50, 50)       # Rojo (Fuera de encuadre / buscando)
-                        glow_color = (255, 90, 90)
+                        color = (255, 50, 50)       # Rojo de calibración (Fuera de encuadre)
 
-                    # 1. Dibujar el óvalo guía suave
+                    # 1. Óvalo guía principal con suavizado anti-aliasing
                     cv2.ellipse(display_rgb, (face_cx, face_cy), axes, 0, 0, 360, color, 2, cv2.LINE_AA)
 
-                    # 2. Punto orbital interactivo que recorre el perímetro (Efecto biometría bancaria)
-                    theta = (time.time() * 3.5) % (2 * np.pi)
-                    orbit_x = int(face_cx + axes[0] * np.cos(theta))
-                    orbit_y = int(face_cy + axes[1] * np.sin(theta))
-
-                    cv2.circle(display_rgb, (orbit_x, orbit_y), 9, glow_color, 2, cv2.LINE_AA)
-                    cv2.circle(display_rgb, (orbit_x, orbit_y), 5, (255, 255, 255), -1, cv2.LINE_AA)
+                    # 2. Retícula biométrica de precisión (Miras de encuadre en los 4 ejes cardinales)
+                    ax_w, ax_h = axes
+                    tick_len = 10
+                    # Superior
+                    cv2.line(display_rgb, (face_cx, face_cy - ax_h - tick_len), (face_cx, face_cy - ax_h + tick_len), color, 2, cv2.LINE_AA)
+                    # Inferior
+                    cv2.line(display_rgb, (face_cx, face_cy + ax_h - tick_len), (face_cx, face_cy + ax_h + tick_len), color, 2, cv2.LINE_AA)
+                    # Izquierdo
+                    cv2.line(display_rgb, (face_cx - ax_w - tick_len, face_cy), (face_cx - ax_w + tick_len, face_cy), color, 2, cv2.LINE_AA)
+                    # Derecho
+                    cv2.line(display_rgb, (face_cx + ax_w - tick_len, face_cy), (face_cx + ax_w + tick_len, face_cy), color, 2, cv2.LINE_AA)
 
                 if not self._is_processing:
                     if len(faces) == 0:

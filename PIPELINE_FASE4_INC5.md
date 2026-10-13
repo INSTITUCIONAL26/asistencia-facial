@@ -37,18 +37,18 @@ Se integró `VoiceService` (`pyttsx3` con voz nativa en español SAPI5) para bri
 - **Registro de Alumnos:**
   - Instrucciones de pose para cada ángulo: *"Por favor, mire de frente a la cámara"*, *"Gire hacia su izquierda"*, *"Gire hacia su derecha"*.
   - Confirmación de captura: *"Fotografía capturada"*.
-## 6. Módulo UX/Biometría: Guía Orbital Interactiva (Estilo Bancario) y Captura Pura
-- **Guía Orbital en Tiempo Real:** 
-  - La cámara incorpora un detector de encuadre y proporción facial con estética *fintech/bancaria*.
-  - Un punto orbital interactivo recorre el contorno del óvalo a velocidad constante.
-  - Si el rostro está centrado y a la distancia adecuada (o si hubo match verificado), el óvalo y el punto brillan en **Verde Esmeralda**.
-  - Si el rostro está fuera de posición, se muestran en **Rojo/Ámbar** para guiar al usuario.
+## 6. Módulo UX/Biometría: Retícula de Precisión e Industrialización de Voz
+- **Retícula Biométrica Industrial:**
+  - Se eliminaron elementos toscos o giratorios sustituyéndolos por una **retícula de precisión** con miras en los 4 ejes cardinales y óvalo anti-aliasing.
+  - **Calibración:** Si el rostro está centrado en el encuadre y a la distancia óptima (o match verificado), la retícula conmuta a **Verde Esmeralda (`#00E673`)**. Fuera de posición, se mantiene en **Rojo de Calibración (`#FF3232`)**.
 - **Captura Pura (Clean Frame):**
-  - Se desacopló la visualización en pantalla del almacenamiento en Base de Datos mediante la señal `clean_frame_captured`.
-  - Las fotografías guardadas en PostgreSQL (`foto_alumno`) se almacenan 100% limpias, sin marcos, óvalos ni puntos quemados en la imagen.
+  - Desacoplamiento total entre visor y base de datos: las imágenes en PostgreSQL se almacenan 100% limpias sin sobreimpresión gráfica.
+- **Motor de Audio Persistente:**
+  - El hilo de voz mantiene el objeto COM SAPI activo en memoria para garantizar salida de audio continua, sin recortes por garbage collection ni silencios posteriores.
 
 ## 🎉 ¡FIN DEL INCREMENTO 5!
-Con estas 4 fases terminadas, el módulo de audio SAPI continuo y la biometría orbital bancaria, la aplicación alcanza estándar industrial apto para máxima calificación.
+Con estas 4 fases terminadas, la síntesis de voz continua y la retícula biométrica de precisión, la aplicación alcanza estándar industrial robusto.
+
 
 
 
