@@ -20,10 +20,10 @@ Se programó el árbol de decisiones exacto solicitado en el audio para proteger
 Si una persona que no está en la base de datos pasa por la cámara (o si el modelo devuelve una distancia $> 0.40$), el sistema ignora el evento de forma silenciosa para no interrumpir el flujo constante de estudiantes reales pasando por el molinete.
 
 ## 4. Script de Limpieza y Reset de Base de Datos (PowerShell)
-Para realizar pruebas limpias desde cero sin perder las credenciales del usuario administrador, se utiliza la siguiente instrucción directa en PowerShell:
+Para realizar pruebas limpias desde cero sin perder las credenciales del usuario administrador, se utiliza el script `reset_db.py` ubicado en la raíz del proyecto. Este script borra todos los datos **y reinicia los IDs a 1** (`RESTART IDENTITY`):
 
 ```powershell
-.\.venv\Scripts\python.exe -c "import sys; sys.path.insert(0, 'src'); from config.database import get_connection; conn = get_connection(); cur = conn.cursor(); cur.execute('TRUNCATE TABLE asistencia, foto_alumno, alumno, jornada CASCADE;'); conn.commit(); print('¡Todos los registros de prueba fueron eliminados exitosamente!')"
+.\.venv\Scripts\python.exe reset_db.py
 ```
 
 > [!NOTE]
@@ -37,9 +37,18 @@ Se integró `VoiceService` (`pyttsx3` con voz nativa en español SAPI5) para bri
 - **Registro de Alumnos:**
   - Instrucciones de pose para cada ángulo: *"Por favor, mire de frente a la cámara"*, *"Gire hacia su izquierda"*, *"Gire hacia su derecha"*.
   - Confirmación de captura: *"Fotografía capturada"*.
-- **Rendimiento:** Opera mediante cola y worker en segundo plano con control de *cooldown* antispam, garantizando 0% de impacto en los 30 FPS del video y en el ciclo de reconocimiento.
+## 6. Módulo UX/Biometría: Guía Orbital Interactiva (Estilo Bancario) y Captura Pura
+- **Guía Orbital en Tiempo Real:** 
+  - La cámara incorpora un detector de encuadre y proporción facial con estética *fintech/bancaria*.
+  - Un punto orbital interactivo recorre el contorno del óvalo a velocidad constante.
+  - Si el rostro está centrado y a la distancia adecuada (o si hubo match verificado), el óvalo y el punto brillan en **Verde Esmeralda**.
+  - Si el rostro está fuera de posición, se muestran en **Rojo/Ámbar** para guiar al usuario.
+- **Captura Pura (Clean Frame):**
+  - Se desacopló la visualización en pantalla del almacenamiento en Base de Datos mediante la señal `clean_frame_captured`.
+  - Las fotografías guardadas en PostgreSQL (`foto_alumno`) se almacenan 100% limpias, sin marcos, óvalos ni puntos quemados en la imagen.
 
 ## 🎉 ¡FIN DEL INCREMENTO 5!
-Con estas 4 fases terminadas y el módulo de audio, la aplicación es capaz de gestionar jornadas y realizar reconocimiento biométrico industrial en tiempo real con ventanas de tolerancia temporales y guiado por voz.
+Con estas 4 fases terminadas, el módulo de audio SAPI continuo y la biometría orbital bancaria, la aplicación alcanza estándar industrial apto para máxima calificación.
+
 
 

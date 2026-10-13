@@ -11,8 +11,9 @@ class CameraThread(QThread):
     - Cada 2 segundos, si hay exactamente 1 rostro, emite el crop para reconocimiento.
     """
     frame_captured = Signal(QImage)
+    clean_frame_captured = Signal(QImage)
     face_to_recognize = Signal(np.ndarray)
-    status_update = Signal(str)  # Nueva señal para el feedback visual en tiempo real
+    status_update = Signal(str)
 
     def __init__(self, camera_index=0, parent=None):
         super().__init__(parent)
@@ -45,25 +46,51 @@ class CameraThread(QThread):
             ret, frame = self.capture.read()
             if ret:
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                # Aumentamos minNeighbors a 8 y minSize a 120x120 para evitar falsos positivos (como el cuello)
+                # Detección facial optimizada
                 faces = self.face_cascade.detectMultiScale(
                     gray, scaleFactor=1.1, minNeighbors=8, minSize=(120, 120)
                 )
-                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                
+                # Imagen limpia (para almacenamiento y archivo biométrico sin dibujos)
+                clean_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                h_img, w_img, ch = clean_rgb.shape
+                bytes_per_line = ch * w_img
+                clean_qt_image = QImage(clean_rgb.data, w_img, h_img, bytes_per_line, QImage.Format.Format_RGB888).copy()
+                self.clean_frame_captured.emit(clean_qt_image)
 
-                # Flag visual para saber si mostrar verde o rojo
+                # Imagen visual con interfaz biométrica interactiva estilo bancaria
+                display_rgb = clean_rgb.copy()
                 is_match = time.time() < self._green_until
+                center_frame_x = w_img // 2
+                center_frame_y = h_img // 2
 
                 for (x, y, w, h) in faces:
-                    center_x, center_y = x + w // 2, y + h // 2
+                    face_cx = x + w // 2
+                    face_cy = y + h // 2
                     axes = (int((w // 2) * 1.35), int((h // 2) * 1.45))
-                    
-                    if is_match:
-                        color = (0, 255, 0)  # Verde
-                    else:
-                        color = (255, 0, 0)  # Rojo en RGB
 
-                    cv2.ellipse(frame_rgb, (center_x, center_y), axes, 0, 0, 360, color, 3)
+                    # Evaluación de encuadre (Centro y Proporción)
+                    dx = abs(face_cx - center_frame_x)
+                    dy = abs(face_cy - center_frame_y)
+                    is_centered = (dx < w_img * 0.18) and (dy < h_img * 0.20) and (w >= w_img * 0.20) and (w <= w_img * 0.75)
+
+                    if is_match or is_centered:
+                        color = (0, 230, 115)       # Verde esmeralda (Encuadre perfecto)
+                        glow_color = (0, 255, 128)
+                    else:
+                        color = (255, 50, 50)       # Rojo (Fuera de encuadre / buscando)
+                        glow_color = (255, 90, 90)
+
+                    # 1. Dibujar el óvalo guía suave
+                    cv2.ellipse(display_rgb, (face_cx, face_cy), axes, 0, 0, 360, color, 2, cv2.LINE_AA)
+
+                    # 2. Punto orbital interactivo que recorre el perímetro (Efecto biometría bancaria)
+                    theta = (time.time() * 3.5) % (2 * np.pi)
+                    orbit_x = int(face_cx + axes[0] * np.cos(theta))
+                    orbit_y = int(face_cy + axes[1] * np.sin(theta))
+
+                    cv2.circle(display_rgb, (orbit_x, orbit_y), 9, glow_color, 2, cv2.LINE_AA)
+                    cv2.circle(display_rgb, (orbit_x, orbit_y), 5, (255, 255, 255), -1, cv2.LINE_AA)
 
                 if not self._is_processing:
                     if len(faces) == 0:
@@ -95,9 +122,7 @@ class CameraThread(QThread):
                             else:
                                 self._emitir_estado("Enfocando rostro (Espera de seguridad)...")
 
-                h_img, w_img, ch = frame_rgb.shape
-                bytes_per_line = ch * w_img
-                qt_image = QImage(frame_rgb.data, w_img, h_img, bytes_per_line, QImage.Format.Format_RGB888)
+                qt_image = QImage(display_rgb.data, w_img, h_img, bytes_per_line, QImage.Format.Format_RGB888)
                 self.frame_captured.emit(qt_image)
             else:
                 self.msleep(10)

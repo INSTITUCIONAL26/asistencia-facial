@@ -20,6 +20,7 @@ class CamaraDialog(QDialog):
         self.camera_thread = None
         self.captured_image_bytes = None
         self.current_qt_image = None
+        self.clean_qt_image = None
         self._is_review_mode = False
         
         self._build_ui()
@@ -106,7 +107,12 @@ class CamaraDialog(QDialog):
         if self.camera_thread is None:
             self.camera_thread = CameraThread(camera_index=0)
             self.camera_thread.frame_captured.connect(self._actualizar_frame)
+            self.camera_thread.clean_frame_captured.connect(self._actualizar_clean_frame)
             self.camera_thread.start()
+
+    def _actualizar_clean_frame(self, clean_qt_image: QImage):
+        if not self._is_review_mode:
+            self.clean_qt_image = clean_qt_image
             
     def _actualizar_frame(self, qt_image: QImage):
         if not self._is_review_mode:
@@ -120,8 +126,9 @@ class CamaraDialog(QDialog):
             self.panel_video.setPixmap(pixmap)
             
     def _capturar_foto(self):
-        """Congela el frame y pasa al modo revisión."""
-        if self.current_qt_image:
+        """Congela y almacena la fotografía LIMPIA (sin círculos ni guías pintadas)."""
+        foto_final = self.clean_qt_image if self.clean_qt_image is not None else self.current_qt_image
+        if foto_final:
             self._is_review_mode = True
             
             # Detener el hilo de la cámara temporalmente para congelar la imagen
@@ -129,6 +136,16 @@ class CamaraDialog(QDialog):
                 self.camera_thread.stop()
                 self.camera_thread = None
                 
+            self.current_qt_image = foto_final
+            
+            # Mostrar la foto limpia congelada en el visor de revisión
+            pixmap = QPixmap.fromImage(foto_final).scaled(
+                self.panel_video.width(), self.panel_video.height(),
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation
+            )
+            self.panel_video.setPixmap(pixmap)
+
             self.btn_capturar.hide()
             self.btn_reintentar.show()
             self.btn_aceptar.show()

@@ -1,13 +1,15 @@
-import threading
-import queue
 import time
-import pyttsx3
+import threading
 
 
 class VoiceService:
     """
-    Servicio de síntesis de voz asíncrono y no bloqueante.
-    Permite enviar mensajes de voz sin congelar la cámara ni la interfaz PySide6.
+    Servicio de síntesis de voz asíncrono y ultra-robusto para Windows.
+    Utiliza directamente la API nativa SAPI.SpVoice con modo asíncrono puro (SVSFlagsAsync).
+    Garantiza:
+    1. Cero bloqueos en los hilos de la UI y cámara.
+    2. No sufre de los bloqueos de bucle de pyttsx3.
+    3. Habla con voz nativa en español (Microsoft Helena).
     """
     _instance = None
     _lock = threading.Lock()
@@ -20,57 +22,38 @@ class VoiceService:
             return cls._instance
 
     def _init_service(self):
-        self._queue = queue.Queue()
         self._last_spoken = {}
-        self._is_running = True
-        self._worker_thread = threading.Thread(target=self._worker, daemon=True)
-        self._worker_thread.start()
+        self._speaker = None
+        self._init_speaker()
 
-    def _worker(self):
-        # En Windows, pyttsx3 requiere inicializar COM en el mismo hilo
+    def _init_speaker(self):
         try:
             import pythoncom
+            import win32com.client
             pythoncom.CoInitialize()
-        except Exception:
-            pass
-
-        try:
-            engine = pyttsx3.init()
-            # Ajustar velocidad a un ritmo natural en español
-            engine.setProperty('rate', 170)
-            engine.setProperty('volume', 1.0)
-
-            # Buscar y seleccionar voz en español
-            voices = engine.getProperty('voices')
-            for v in voices:
-                nombre = v.name.lower()
-                vid = v.id.lower()
-                if 'spanish' in nombre or 'es-es' in vid or 'helena' in nombre or 'sabina' in nombre:
-                    engine.setProperty('voice', v.id)
+            self._speaker = win32com.client.Dispatch("SAPI.SpVoice")
+            
+            # Buscar voz en español
+            for v in self._speaker.GetVoices():
+                desc = v.GetDescription()
+                if "helena" in desc.lower() or "spanish" in desc.lower():
+                    self._speaker.Voice = v
                     break
+            # Velocidad natural y fluida
+            self._speaker.Rate = 1
+            self._speaker.Volume = 100
         except Exception as e:
-            print(f"[VoiceService] Error inicializando motor TTS: {e}")
-            engine = None
+            print(f"[VoiceService] Error al conectar SAPI SpVoice: {e}")
+            self._speaker = None
 
-        while self._is_running:
-            try:
-                texto = self._queue.get(timeout=0.5)
-                if texto and engine:
-                    engine.say(texto)
-                    engine.runAndWait()
-                self._queue.task_done()
-            except queue.Empty:
-                continue
-            except Exception as e:
-                print(f"[VoiceService] Error al reproducir audio: {e}")
-
-    def hablar(self, texto: str, cooldown: float = 0.0):
+    def hablar(self, texto: str, cooldown: float = 0.0, purge: bool = False):
         """
-        Envía un texto a la cola de voz de forma asíncrona.
+        Reproduce un mensaje de voz en segundo plano de manera asíncrona.
         
         Parámetros:
-            texto: Frase a reproducir.
-            cooldown: Segundos mínimos a esperar antes de volver a repetir esta misma frase.
+            texto: Frase a pronunciar.
+            cooldown: Segundos a esperar antes de repetir este mismo mensaje.
+            purge: Si es True, interrumpe cualquier locución previa y habla de inmediato.
         """
         if not texto:
             return
@@ -82,17 +65,30 @@ class VoiceService:
             return
 
         self._last_spoken[texto] = ahora
-        self._queue.put(texto)
 
-    def vaciar_cola(self):
-        """Descarta mensajes pendientes en la cola."""
-        while not self._queue.empty():
+        def _async_speak():
             try:
-                self._queue.get_nowait()
-                self._queue.task_done()
-            except queue.Empty:
-                break
+                import pythoncom
+                import win32com.client
+                pythoncom.CoInitialize()
+                speaker = win32com.client.Dispatch("SAPI.SpVoice")
+                for v in speaker.GetVoices():
+                    desc = v.GetDescription()
+                    if "helena" in desc.lower() or "spanish" in desc.lower():
+                        speaker.Voice = v
+                        break
+                speaker.Rate = 1
+                speaker.Volume = 100
+                # 1 = SVSFlagsAsync, 2 = SVSFPurgeBeforeSpeak
+                flags = 1 | (2 if purge else 0)
+                speaker.Speak(texto, flags)
+            except Exception as err:
+                print(f"[VoiceService] Fallo al reproducir voz: {err}")
+
+        # Ejecutamos la llamada en un hilo ultra-liviano para evitar cualquier bloqueo COM
+        t = threading.Thread(target=_async_speak, daemon=True)
+        t.start()
 
 
-# Instancia única lista para importar
+# Instancia única lista para usar
 voice_service = VoiceService()
