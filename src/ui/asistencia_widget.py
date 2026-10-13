@@ -155,9 +155,14 @@ class AsistenciaWidget(QWidget):
         from ui.camera_thread import CameraThread
         from ai.reconocimiento_thread import ReconocimientoThread
         from repositories.asistencia_repository import AsistenciaRepository
+        from repositories.alumno_repository import AlumnoRepository
+        from services.voice_service import voice_service
 
         if not hasattr(self, 'asistencia_repo'):
             self.asistencia_repo = AsistenciaRepository()
+
+        if not hasattr(self, 'alumno_repo'):
+            self.alumno_repo = AlumnoRepository()
 
         if not hasattr(self, 'reconocimiento_thread') or self.reconocimiento_thread is None:
             self.reconocimiento_thread = ReconocimientoThread(self)
@@ -204,6 +209,7 @@ class AsistenciaWidget(QWidget):
             self.lbl_val_estado.setStyleSheet("color: #ecf0f1; font-size: 14px; border: none;")
 
     def _procesar_match(self, alumno_id, distancia):
+        from services.voice_service import voice_service
         self._actualizar_datos_modelo(alumno_id, distancia, color_id="#2ecc71", color_dist="#2ecc71")
         
         # Pintar el óvalo de verde por 2 segundos
@@ -215,14 +221,18 @@ class AsistenciaWidget(QWidget):
             return
 
         asistencia = self.asistencia_repo.obtener_asistencia_activa(alumno_id, jornada_id)
+        nombre_alumno = self.alumno_repo.obtener_nombre_por_id(alumno_id)
+        saludo_nombre = f", {nombre_alumno}" if nombre_alumno else ""
         
         if asistencia is None:
             self.asistencia_repo.registrar_entrada(alumno_id, jornada_id)
             self._actualizar_accion(f"Entrada registrada", "#2ecc71")
+            voice_service.hablar(f"Entrada registrada. Bienvenido{saludo_nombre}.", cooldown=4.0)
         else:
             asist_id, entrada, salida = asistencia
             if salida is not None:
                 self._actualizar_accion("Asistencia completada (Entrada y Salida)", "#3498db")
+                voice_service.hablar(f"Asistencia ya completada para esta jornada{saludo_nombre}.", cooldown=5.0)
                 return
             
             hora_salida_jornada = self.jornada_widget.salida_edit.time()
@@ -232,12 +242,16 @@ class AsistenciaWidget(QWidget):
             if segundos_diff <= 300:
                 self.asistencia_repo.registrar_salida(asist_id)
                 self._actualizar_accion(f"Salida registrada", "#2ecc71")
+                voice_service.hablar(f"Salida registrada. Hasta luego{saludo_nombre}.", cooldown=4.0)
             else:
                 self._actualizar_accion("Esperando horario de salida", "#e67e22")
+                voice_service.hablar("Entrada ya registrada. Por favor, espere a su horario de salida.", cooldown=5.0)
 
     def _procesar_rechazo(self, distancia):
+        from services.voice_service import voice_service
         self._actualizar_datos_modelo("Desconocido", distancia, color_id="#e74c3c", color_dist="#e74c3c")
         self._actualizar_accion("Rostro no reconocido (ignorado)", "#e74c3c")
+        voice_service.hablar("Rostro no reconocido.", cooldown=4.0)
 
     def _actualizar_frame_camara(self, qt_image):
         from PySide6.QtGui import QPixmap

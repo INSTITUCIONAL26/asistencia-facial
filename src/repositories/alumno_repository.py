@@ -95,3 +95,16 @@ class AlumnoRepository:
                 cur.execute(query)
                 fotos = cur.fetchall()
         return fotos
+
+    def obtener_nombre_por_id(self, alumno_id):
+        """
+        Retorna el nombre y apellido del alumno dado su ID.
+        """
+        query = "SELECT nombre, apellido FROM alumno WHERE id = %s;"
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(query, (alumno_id,))
+                row = cur.fetchone()
+                if row:
+                    return f"{row[0]} {row[1]}"
+        return None

@@ -25,6 +25,16 @@ class CamaraDialog(QDialog):
         self._build_ui()
         self._iniciar_camara()
         
+        # Guía auditiva según el ángulo a fotografiar
+        from services.voice_service import voice_service
+        t_low = titulo.lower()
+        if "frontal" in t_low:
+            voice_service.hablar("Por favor, mire de frente a la cámara.", cooldown=2.0)
+        elif "izquierd" in t_low:
+            voice_service.hablar("Por favor, gire levemente el rostro hacia su izquierda.", cooldown=2.0)
+        elif "derech" in t_low:
+            voice_service.hablar("Por favor, gire levemente el rostro hacia su derecha.", cooldown=2.0)
+
     def _build_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
@@ -123,9 +133,14 @@ class CamaraDialog(QDialog):
             self.btn_reintentar.show()
             self.btn_aceptar.show()
 
+            from services.voice_service import voice_service
+            voice_service.hablar("Fotografía capturada.", cooldown=1.0)
+
     def _reintentar(self):
         """Descarta la foto congelada y vuelve a encender la cámara."""
         self._iniciar_camara()
+        from services.voice_service import voice_service
+        voice_service.hablar("Reintentando captura.", cooldown=1.0)
         
     def get_image_bytes(self) -> bytes:
         """Extrae la imagen en formato JPG en bytes."""

@@ -27,8 +27,19 @@ Para realizar pruebas limpias desde cero sin perder las credenciales del usuario
 ```
 
 > [!NOTE]
-> Este comando ejecuta `TRUNCATE CASCADE` exclusivamente sobre las tablas transaccionales (`asistencia`, `foto_alumno`, `alumno`, `jornada`), preservando intacta la tabla `usuario` para mantener el inicio de sesión.
+## 5. Módulo Adicional de Accesibilidad: Síntesis de Voz Asíncrona (TTS)
+Se integró `VoiceService` (`pyttsx3` con voz nativa en español SAPI5) para brindar retroalimentación por voz en tiempo real:
+- **Asistencia Biométrica:**
+  - *"Entrada registrada. Bienvenido, [Nombre Alumno]."*
+  - *"Salida registrada. Hasta luego, [Nombre Alumno]."*
+  - *"Entrada ya registrada. Por favor, espere a su horario de salida."*
+  - *"Rostro no reconocido."*
+- **Registro de Alumnos:**
+  - Instrucciones de pose para cada ángulo: *"Por favor, mire de frente a la cámara"*, *"Gire hacia su izquierda"*, *"Gire hacia su derecha"*.
+  - Confirmación de captura: *"Fotografía capturada"*.
+- **Rendimiento:** Opera mediante cola y worker en segundo plano con control de *cooldown* antispam, garantizando 0% de impacto en los 30 FPS del video y en el ciclo de reconocimiento.
 
 ## 🎉 ¡FIN DEL INCREMENTO 5!
-Con estas 4 fases terminadas, la aplicación es capaz de gestionar jornadas y realizar reconocimiento biométrico industrial en tiempo real con ventanas de tolerancia temporales, todo sin congelar la pantalla.
+Con estas 4 fases terminadas y el módulo de audio, la aplicación es capaz de gestionar jornadas y realizar reconocimiento biométrico industrial en tiempo real con ventanas de tolerancia temporales y guiado por voz.
+
 
