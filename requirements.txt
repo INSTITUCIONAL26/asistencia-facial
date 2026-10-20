@@ -6,3 +6,5 @@ keras
 psycopg[binary]
 python-dotenv
 pyttsx3
+openpyxl
+reportlab

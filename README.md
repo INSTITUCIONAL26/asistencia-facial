@@ -58,7 +58,7 @@ Para mantener el sistema optimizado cuando no se está desarrollando, se recomie
 Dependiendo de tu terminal, los comandos para acceder a la "burbuja" del proyecto son:
 
 **Si usas Símbolo del Sistema (CMD):**
-- Activar: `.venv\Scripts\activate.bat`
+- Activar: `.\.venv\Scripts\Activate.ps1`
 - Desactivar: `deactivate`
 
 **Si usas PowerShell:**
