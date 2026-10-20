@@ -45,14 +45,20 @@ Incorporar una nueva sección **Exportar Informes** que permita consultar el his
   - `obtener_detalle_jornada(jornada_id, usuario_id)`
   - `obtener_asistencias_jornada(jornada_id, usuario_id)`
 
-### ⏳ Fase 2: Motores de Exportación (Excel y PDF)
-- [ ] Creación de `ExcelExportService` (`src/services/excel_export_service.py`) usando `openpyxl`:
-  - Encabezado de la Jornada y estilos tipográficos.
-  - Tabla de alumnos con bordes, anchos de columna dinámicos y formatos de hora.
-  - Gestión de `Sin registrar`, jornadas vacías y contador singular/plural.
-- [ ] Creación de `PdfExportService` (`src/services/pdf_export_service.py`) usando `reportlab`:
-  - Documento `SimpleDocTemplate` con `Table`, `TableStyle` y `ParagraphStyle`.
-  - Estructuración de encabezado, tabla y leyenda final.
+### ✅ Fase 2: Motores de Exportación (Excel y PDF) (Completada)
+- [x] Creación de `ExcelExportService` (`src/services/excel_export_service.py`) usando `openpyxl`:
+  - Encabezado con datos completos de la Jornada (Fecha, Cátedra, Horarios y Usuario docente).
+  - Tabla de alumnos con índices, alineación diferenciada, fondos cebra y bordes finos.
+  - Ajuste automático de anchos de columna para evitar textos truncados (`###`).
+  - Caso especial: Salida NULL representada como `Sin registrar`.
+  - Caso especial: Jornadas sin asistencias (`No se registraron asistencias para esta Jornada.`).
+  - Contador final con gramática estricta (singular/plural y 0 alumnos).
+  - Función generadora de nombre sugerido oficial: `asistencia_YYYY-MM-DD_<catedra-slug>.xlsx`.
+- [x] Creación de `PdfExportService` (`src/services/pdf_export_service.py`) usando `reportlab`:
+  - Maquetado en hoja A4 con márgenes de 36 pt y anchos proporcionales exactos (520 pt).
+  - Tabla estilizada con cabecera en azul corporativo (`#1F497D`), texto blanco y bordes sutiles.
+  - Tratamiento idéntico de casos especiales (`Sin registrar`, 0 asistencias y contadores).
+  - Función generadora de nombre sugerido oficial: `asistencia_YYYY-MM-DD_<catedra-slug>.pdf`.
 
 ### ⏳ Fase 3: Interfaz de Usuario e Integración en Menú Lateral
 - [ ] Creación de `InformesWidget` (`src/ui/informes_widget.py`) con `QTableWidget`:
