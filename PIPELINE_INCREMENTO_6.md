@@ -72,6 +72,26 @@ Incorporar una nueva sección **Exportar Informes** que permita consultar el his
   - Incorporación en el `QStackedWidget` (índice 3).
   - Vinculación con `usuario_id` del docente autenticado.
 
-### ⏳ Fase 4: Pruebas Integrales y Casos Especiales
-- [ ] Validación de los 10 casos de prueba obligatorios de la rúbrica.
-- [ ] Pruebas de seguridad multisesión y no filtrado por jornada terminada.
+### ✅ Fase 4: Pruebas Integrales y Casos Especiales (Completada)
+- [x] Validación de los casos de prueba obligatorios de la rúbrica oficial:
+  - **Usuario con varias Jornadas:** Aislamiento total; sólo visualiza y exporta jornadas propias vinculadas a su `usuario_id`.
+  - **Jornadas de distintas fechas:** Ordenadas estrictamente de la más reciente a la más antigua (`fecha DESC`).
+  - **Varias Jornadas el mismo día:** Orden secundario por horario de entrada descendente (`horario_entrada DESC`).
+  - **Nueva Jornada creada sin reiniciar:** Refresco en caliente vía `cargar_jornadas()` al hacer clic en *Exportar Informes*.
+  - **Exportar Excel:** Generación de archivo `.xlsx` válido con encabezado, cuadrícula, alineaciones y anchos automáticos.
+  - **Exportar PDF:** Generación de archivo `.pdf` en hoja A4 con tabla proporcional y encabezado institucional.
+  - **Asistencia con entrada y salida:** Formato horario `HH:MM`.
+  - **Asistencia con salida NULL:** Representación exacta como `Sin registrar`.
+  - **Jornada sin asistencias:** Generación correcta del archivo con el mensaje `No se registraron asistencias para esta Jornada.` y contador en `0 alumnos presentes.`.
+  - **Contador final singular/plural:**
+    - 0 alumnos: `0 alumnos presentes.`
+    - 1 alumno: `Se registró 1 alumno presente en total.`
+    - Varios alumnos: `Se registraron X alumnos presentes en total.`
+  - **Nombres sugeridos oficiales:** Formato `asistencia_YYYY-MM-DD_<catedra-slug>.<ext>`.
+  - **Cancelación de diálogo:** Si el usuario presiona Cancelar en `QFileDialog`, no se genera archivo ni se muestra error.
+
+---
+
+## 🎉 ¡FIN DEL INCREMENTO 6!
+Con las 4 fases concluidas y verificadas, el sistema cumple el 100% de las especificaciones y casos de prueba requeridos por la cátedra para la exportación de planillas de asistencia formal en Excel y PDF.
+
