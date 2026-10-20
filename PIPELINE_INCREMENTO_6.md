@@ -60,13 +60,17 @@ Incorporar una nueva sección **Exportar Informes** que permita consultar el his
   - Tratamiento idéntico de casos especiales (`Sin registrar`, 0 asistencias y contadores).
   - Función generadora de nombre sugerido oficial: `asistencia_YYYY-MM-DD_<catedra-slug>.pdf`.
 
-### ⏳ Fase 3: Interfaz de Usuario e Integración en Menú Lateral
-- [ ] Creación de `InformesWidget` (`src/ui/informes_widget.py`) con `QTableWidget`:
-  - Columnas: `Fecha`, `Cátedra`, `Horario` (`HH:MM - HH:MM`), botón `Excel` y botón `PDF`.
-  - Método `recargar_datos()` para refresco dinámico al entrar.
-- [ ] Integración en `MainWindow`:
-  - Cuarto botón en Menú lateral: `Exportar Informes`.
-  - Conexión con `QFileDialog` para selección de carpeta/nombre sugerido.
+### ✅ Fase 3: Interfaz de Usuario e Integración en Menú Lateral (Completada)
+- [x] Creación de `InformesWidget` (`src/ui/informes_widget.py`) con `QTableWidget`:
+  - Columnas oficiales: `Fecha`, `Cátedra`, `Horario` (`HH:MM - HH:MM`), botón `Excel` y botón `PDF`.
+  - Botones de acción independientes por fila con iconos y colores corporativos (verde Excel y rojo PDF).
+  - Integración nativa de `QFileDialog.getSaveFileName` con nombres sugeridos oficiales.
+  - Refresco automático al ingresar a la pestaña (`showEvent` y hook en `cambiar_vista`).
+  - Manejo de estado vacío ("No se encontraron Jornadas registradas...") y protección ante fallos de conexión.
+- [x] Integración en `MainWindow`:
+  - Cuarto botón en Menú lateral: `Exportar Informes` con icono `file-text.svg`.
+  - Incorporación en el `QStackedWidget` (índice 3).
+  - Vinculación con `usuario_id` del docente autenticado.
 
 ### ⏳ Fase 4: Pruebas Integrales y Casos Especiales
 - [ ] Validación de los 10 casos de prueba obligatorios de la rúbrica.

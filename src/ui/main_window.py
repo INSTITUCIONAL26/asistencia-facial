@@ -8,6 +8,7 @@ from PySide6.QtGui import QIcon
 from ui.asistencia_widget import AsistenciaWidget
 from ui.jornada_widget import JornadaWidget
 from ui.registrar_alumno_widget import RegistrarAlumnoWidget
+from ui.informes_widget import InformesWidget
 
 
 class MainWindow(QMainWindow):
@@ -55,6 +56,7 @@ class MainWindow(QMainWindow):
         self.jornada_widget = JornadaWidget(usuario_id)
         self.asistencia_widget = AsistenciaWidget(self.jornada_widget)
         self.registrar_alumno_widget = RegistrarAlumnoWidget()
+        self.informes_widget = InformesWidget(usuario_id)
 
         # Conectar la señal de cambio de estado de jornada para que la cámara se apague si se desconfigura
         self.jornada_widget.estado_cambiado.connect(self.asistencia_widget.on_jornada_estado_cambiado)
@@ -63,12 +65,14 @@ class MainWindow(QMainWindow):
         self.stack.addWidget(self.asistencia_widget)        # índice 0
         self.stack.addWidget(self.jornada_widget)           # índice 1
         self.stack.addWidget(self.registrar_alumno_widget)  # índice 2
+        self.stack.addWidget(self.informes_widget)          # índice 3
 
         # ── Botones del sidebar ─────────────────────────────────────
         opciones = [
             ("  Captura Facial",      "src/ui/assets/camera.svg",    0),
             ("  Configurar Jornada",  "src/ui/assets/calendar.svg",  1),
             ("  Registrar Alumno",    "src/ui/assets/user-plus.svg", 2),
+            ("  Exportar Informes",   "src/ui/assets/file-text.svg", 3),
         ]
 
         self.sidebar_buttons = []
@@ -106,6 +110,9 @@ class MainWindow(QMainWindow):
     def cambiar_vista(self, indice):
         """Cambia el panel de contenido y actualiza el estilo del botón activo."""
         self.stack.setCurrentIndex(indice)
+        if indice == 3 and hasattr(self, 'informes_widget'):
+            self.informes_widget.cargar_jornadas()
+
         for i, btn in enumerate(self.sidebar_buttons):
             activo = (i == indice)
             btn.setChecked(activo)
