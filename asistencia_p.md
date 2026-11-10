@@ -140,7 +140,67 @@ erDiagram
 
 ---
 
-### 5. Estado de Verificación
-* Contenedor Docker: `asistencia_profesores_db` en ejecución en puerto `5440`.
-* Script DDL: `database/initdb/01-schema.sql` ejecutado y validado en PostgreSQL (8 tablas creadas, fixtures iniciales de carreras y cátedras cargados).
-* Script de limpieza `reset_db.py` adaptado al nuevo esquema.
+## 📌 Paso 2: Capa de Repositorios y Servicios de Negocio
+
+### 1. Objetivo del Paso 2
+Implementar la arquitectura de software desacoplada (Patrón Repositorio y Capa de Servicios) con estándares industriales, garantizando tipado estricto, manejo transaccional seguro y resolución automática de todas las reglas de negocio del IES N.º 7 Populorum Progressio.
+
+---
+
+### 2. Módulos Desarrollados
+
+#### A. `src/repositories/docente_repository.py`
+* **Alta y gestión integral de docentes:** Operaciones sobre `docente` con validación y sanitización de DNI, CUIL, Legajo y datos de contacto.
+* **Persistencia Biométrica:** Métodos `guardar_foto()` y `obtener_todas_las_fotos()` compatibles con el motor DeepFace/OpenCV para los 3 ángulos (`frontal`, `izquierdo`, `derecho`).
+* **Búsquedas indexadas:** Búsqueda rápida por DNI, CUIL o Legajo para mesa de entrada y preceptoría.
+
+#### B. `src/repositories/horario_repository.py`
+* **Estructura Académica:** Consultas y asignación de Carreras y Cátedras.
+* **Planificación Horaria:** Registro de clases de 80 minutos, Mesas de Examen (con rol de Presidente, Vocal o Auxiliar) y Jornadas Institucionales.
+* **Resolución Temporal Inteligente (`obtener_obligacion_actual`):**
+  * Prioriza eventos de fecha puntual (Mesas/Jornadas) sobre clases habituales.
+  * Valida ventanas de tolerancia de marcación previa y posterior.
+  * Resuelve clases consecutivas en el mismo día seleccionando la que corresponda al horario de llegada.
+
+#### C. `src/repositories/asistencia_repository.py`
+* **Entrada Segura:** Registro de `entrada` con auditoría de `minutos_tardanza` y estado `en_horario` o `tardanza`.
+* **Salida Controlada:** Actualización de `salida` con auditoría de `minutos_anticipada` y estado `normal` o `anticipada`.
+* **Prevención de Duplicados:** `obtener_asistencia_del_dia()` para evitar dobles marcaciones innecesarias.
+
+#### D. `src/repositories/licencia_repository.py`
+* **Control de Particulares:** Método `contar_particulares_consumidos()` y `cupo_particular_disponible()` para asegurar el límite reglamentario de hasta 6 anuales.
+* **Ciclo de Licencias Médicas:** Registro inicial en estado `pendiente` y promoción a `confirmada` mediante `confirmar_certificado_medico()` al asentar la entrega formal del certificado.
+* **Detección de Licencias Activas:** Intercepta intentos de marcación si el docente está de licencia justificada.
+
+#### E. `src/services/asistencia_service.py` (Cerebro del Dominio)
+* **`evaluar_marcacion(docente_id, momento)`:**
+  * No persiste cambios: analiza el estado del docente y su obligación horaria actual.
+  * Determina si corresponde **ENTRADA** o **SALIDA**.
+  * Aplica los 5 minutos de tolerancia para clasificar `tardanza` vs `en_horario`.
+  * Detecta salidas antes del horario previsto como `anticipada`.
+  * Genera el payload de datos y texto explicativo listo para el diálogo modal obligatorio.
+  * Maneja casos especiales: docente inactivo, con licencia activa, sin actividad programada o marcación ya completada.
+* **`confirmar_marcacion(evaluacion)`:**
+  * Se invoca **exclusivamente cuando el usuario presiona [OK]** en el modal de confirmación.
+  * Si el usuario presiona [Cancelar], la operación se descarta y la base de datos no sufre modificaciones.
+
+#### F. `src/repositories/informe_repository.py`
+* **Planilla Analítica de Asistencias:** Cruce de cada marcación contra el horario y cátedra esperados, calculando automáticamente demoras y anomalías.
+* **Planilla de Licencias y Particulares:** Balance de cupos utilizados (sobre 6) y estado de certificados médicos.
+* **Resumen Ejecutivo por Docente:** Indicadores agregados para la toma de decisiones administrativas.
+
+---
+
+### 3. Validación Industrial Automatizada (`tests/test_paso2.py`)
+Se ejecutó la suite de pruebas contra PostgreSQL en Docker, superando el 100% de los casos:
+1. `DocenteRepository`: Creación y consulta exitosa.
+2. `HorarioRepository`: Vinculación de cátedras y creación de clase de 80 minutos.
+3. `AsistenciaService (Entrada en horario)`: Verificación de tolerancia (3 min de diferencia = en horario).
+4. `AsistenciaService (Entrada con tardanza)`: Detección correcta de 9 min de demora.
+5. `AsistenciaService (Confirmación)`: Persistencia controlada post-modal.
+6. `AsistenciaService (Salida anticipada)`: Detección correcta de 15 min de salida antes de hora.
+7. `AsistenciaService (Salida normal)`: Cierre de jornada en horario reglamentario.
+8. `Caso Especial (Marcación duplicada)`: Bloqueo de re-intento tras completar entrada y salida.
+9. `LicenciaRepository (Particulares)`: Cupo inicial de 6, descuento a 5 tras uso.
+10. `LicenciaRepository (Médica)`: Transición `pendiente` -> `confirmada` al registrar certificado.
+11. `InformeRepository`: Generación de planillas y cálculo de resúmenes ejecutivos.
