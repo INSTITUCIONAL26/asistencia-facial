@@ -1,15 +1,16 @@
 services:
   postgres_db:
     image: postgres:15-alpine
-    container_name: asistencia_facial_db
+    container_name: asistencia_profesores_db
     restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: admin_password123
-      POSTGRES_DB: sistema_asistencia
+      POSTGRES_DB: sistema_profesores
     ports:
-      - "5439:5432"
+      - "5440:5432"
     volumes:
-      - pgdata_asistencia_v2:/var/lib/postgresql/data
+      - pgdata_profesores_v1:/var/lib/postgresql/data
+
 volumes:
-  pgdata_asistencia_v2:
+  pgdata_profesores_v1:

@@ -5,7 +5,7 @@ from config.database import get_connection
 
 conn = get_connection()
 cur = conn.cursor()
-cur.execute('TRUNCATE TABLE asistencia, foto_alumno, alumno, jornada RESTART IDENTITY CASCADE;')
+cur.execute('TRUNCATE TABLE asistencia, licencia_docente, obligacion_horaria, foto_docente, docente, catedra, carrera RESTART IDENTITY CASCADE;')
 conn.commit()
 cur.close()
 conn.close()
