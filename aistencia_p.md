@@ -316,3 +316,55 @@ Se ejecutó la suite de integración de UI, superando el 100% de las pruebas:
 4. `HorariosWidget`: Cálculos automáticos de 80 minutos y persistencia de grilla.
 5. `LicenciasWidget`: Control dinámico de cupo de particulares y confirmación médica.
 6. `MainWindow`: Integración de los 5 módulos en el QStackedWidget con navegación funcional.
+
+---
+
+## 📌 Paso 5: Módulo de Informes, Auditoría y Exportación a Excel/PDF
+
+### 1. Objetivo del Paso 5
+Cumplir rigurosamente con la **Sección 5.5 (Información e informes mínimos)** y **Sección 9 (Entregables)** de la consigna:
+* Facilitar la revisión administrativa de secretaría sin exigir comparar manualmente marcaciones contra horarios externos en papel.
+* Generar planillas de cálculo en **Excel (.xlsx)** y documentos formales en **PDF (.pdf)** con membrete y firmas oficiales.
+* Actualizar el archivo `README.md` con las instrucciones de instalación, ejecución y justificación de decisiones técnicas.
+
+---
+
+### 2. Módulos Desarrollados y Adaptados
+
+#### A. `src/ui/informes_widget.py` (Panel de Auditoría de Secretaría)
+* **Filtros Avanzados y Combinados:**
+  * Por Docente (individual o global).
+  * Por Carrera y Cátedra.
+  * Por Rango de Fechas (Desde / Hasta).
+  * Casilla de verificación *"Solo anomalías"*: filtra de inmediato registros con Tardanzas, Salidas Anticipadas o Salidas Sin Registrar.
+* **Dashboard de Indicadores en Tiempo Real (KPIs):**
+  * Total de Clases/Marcaciones.
+  * Entradas en Horario Normal.
+  * Entradas con Tardanza.
+  * Salidas Anticipadas.
+  * Salidas Sin Registrar (Pendientes de Revisión).
+* **Tabla Interactiva:** Cruce automático de horarios previstos vs marcaciones reales, con formato en colores y minutos de demora/antelación.
+* **Botones de Exportación:** Integración directa con los servicios de generación de Excel y PDF.
+
+#### B. `src/services/excel_export_service.py` (Exportación a Excel con openpyxl)
+* Generación de libro `.xlsx` con diseño profesional institucional.
+* Columnas completas: Fecha, Legajo, Docente, Carrera, Cátedra/Actividad, Tipo, Horario Previsto, Entrada Marcada, Estado Entrada (+minutos), Salida Marcada, Estado Salida (-minutos) y Observaciones.
+* Celdas de anomalías destacadas con fondos suaves para auditoría visual inmediata.
+* Sección inferior con resumen estadístico de secretaría.
+
+#### C. `src/services/pdf_export_service.py` (Exportación a PDF con ReportLab)
+* Documento formal A4 en orientación horizontal (*Landscape*) para óptima visualización de todas las columnas.
+* Membrete institucional del **IES N.º 7 Populorum Progressio**.
+* Tabla estilizada con encabezados corporativos, líneas de separación y paginación.
+* Bloque de firmas institucionales al pie: **Firma de Bedelía / Mesa de Entrada** y **Firma de Secretaría Académica**.
+
+#### D. `README.md`
+* Documento principal del repositorio actualizado con la descripción completa del contexto terciario, arquitectura de base de datos, reglas de negocio e instrucciones paso a paso para desplegar Docker y ejecutar la aplicación.
+
+---
+
+### 3. Validación Automatizada Superada (`tests/test_paso5.py`)
+Se ejecutó la suite de verificación de reportes y exportación, superando el 100% de las pruebas:
+1. `ExcelExportService`: Generación y estructura de archivo Excel (.xlsx) validada.
+2. `PdfExportService`: Generación de documento PDF formal (.pdf) validada.
+3. `InformesWidget`: Inicialización de filtros, cálculo de métricas y renderizado de tabla verificado.

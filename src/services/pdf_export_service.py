@@ -1,7 +1,12 @@
+"""
+Servicio de Exportación a PDF (.pdf) con ReportLab.
+Sistema de Asistencia Docente - IES N.º 7 Populorum Progressio
+"""
 from datetime import date, datetime, time
-from reportlab.lib.pagesizes import A4
+from typing import List, Dict, Any
+from reportlab.lib.pagesizes import A4, landscape
 from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, KeepTogether
 )
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
@@ -9,199 +14,210 @@ from reportlab.lib import colors
 
 class PdfExportService:
     """
-    Servicio de exportación a PDF (.pdf) usando ReportLab.
-    Cumple con el diseño, ordenamiento y casos especiales de la rúbrica del Incremento 6.
+    Genera el informe formal en PDF para presentación a Secretaría y Dirección.
+    Diseñado en formato A4 horizontal (Landscape) para máxima legibilidad.
     """
 
     @staticmethod
-    def exportar(ruta_archivo: str, detalle_jornada: tuple, asistencias: list):
-        """
-        Genera el documento PDF de asistencia.
-
-        detalle_jornada: (id, fecha, catedra, horario_entrada, horario_salida, nombre_usuario)
-        asistencias: lista de tuplas (apellido, nombre, dni, libreta, entrada, salida)
-        """
-        # Desempaquetar metadatos
-        _, fecha_val, catedra, h_entrada, h_salida, usuario_docente = detalle_jornada
-
-        fecha_str = fecha_val.strftime("%d/%m/%Y") if isinstance(fecha_val, (date, datetime)) else str(fecha_val or "")
-        
-        def _fmt_hora(h):
-            if isinstance(h, (time, datetime)):
-                return h.strftime("%H:%M")
-            return str(h or "")
-
-        entrada_str = _fmt_hora(h_entrada)
-        salida_str = _fmt_hora(h_salida)
-
-        # Configuración del documento A4 (595.27 x 841.89 pt)
+    def exportar_informe(
+        ruta_archivo: str,
+        registros: List[Dict[str, Any]],
+        filtros_desc: str = "General",
+        operador_nombre: str = "Administración",
+    ) -> None:
         doc = SimpleDocTemplate(
             ruta_archivo,
-            pagesize=A4,
+            pagesize=landscape(A4),
             leftMargin=36,
             rightMargin=36,
-            topMargin=40,
-            bottomMargin=40
+            topMargin=36,
+            bottomMargin=36,
         )
 
-        elements = []
         styles = getSampleStyleSheet()
 
         # Estilos personalizados
-        style_title = ParagraphStyle(
-            'DocTitle',
-            parent=styles['Heading1'],
-            fontName='Helvetica-Bold',
-            fontSize=18,
-            leading=22,
-            textColor=colors.HexColor('#1F497D'),
-            spaceAfter=15
+        style_inst = ParagraphStyle(
+            "InstHeader",
+            parent=styles["Normal"],
+            fontName="Helvetica-Bold",
+            fontSize=14,
+            textColor=colors.HexColor("#0D3B66"),
+            alignment=1, # Centrado
+            spaceAfter=2,
         )
 
-        style_meta_label = ParagraphStyle(
-            'MetaLabel',
-            fontName='Helvetica-Bold',
-            fontSize=10,
-            leading=14,
-            textColor=colors.HexColor('#333333')
+        style_titulo = ParagraphStyle(
+            "DocTitle",
+            parent=styles["Normal"],
+            fontName="Helvetica-Bold",
+            fontSize=11,
+            textColor=colors.HexColor("#333333"),
+            alignment=1,
+            spaceAfter=6,
         )
 
-        style_meta_val = ParagraphStyle(
-            'MetaVal',
-            fontName='Helvetica',
-            fontSize=10,
-            leading=14,
-            textColor=colors.HexColor('#111111')
+        style_meta = ParagraphStyle(
+            "MetaText",
+            parent=styles["Normal"],
+            fontName="Helvetica",
+            fontSize=8,
+            textColor=colors.HexColor("#666666"),
+            alignment=1,
+            spaceAfter=12,
         )
 
         style_cell = ParagraphStyle(
-            'CellText',
-            fontName='Helvetica',
-            fontSize=9,
-            leading=12,
-            textColor=colors.HexColor('#222222')
+            "CellText",
+            parent=styles["Normal"],
+            fontName="Helvetica",
+            fontSize=8,
+            leading=10,
+            textColor=colors.HexColor("#222222"),
+        )
+
+        style_cell_bold = ParagraphStyle(
+            "CellTextBold",
+            parent=styles["Normal"],
+            fontName="Helvetica-Bold",
+            fontSize=8,
+            leading=10,
+            textColor=colors.HexColor("#222222"),
         )
 
         style_cell_center = ParagraphStyle(
-            'CellTextCenter',
-            parent=style_cell,
-            alignment=1  # Centrado
+            "CellCenter",
+            parent=styles["Normal"],
+            fontName="Helvetica",
+            fontSize=8,
+            leading=10,
+            alignment=1,
         )
 
-        style_contador = ParagraphStyle(
-            'ContadorFinal',
-            fontName='Helvetica-Bold',
-            fontSize=11,
-            leading=15,
-            textColor=colors.HexColor('#1F497D'),
-            spaceBefore=12
+        style_cell_header = ParagraphStyle(
+            "CellHeader",
+            parent=styles["Normal"],
+            fontName="Helvetica-Bold",
+            fontSize=8,
+            leading=10,
+            alignment=1,
+            textColor=colors.white,
         )
 
-        # ── 1. Título ────────────────────────────────────────────────
-        elements.append(Paragraph("PLANILLA DE ASISTENCIA", style_title))
+        elementos = []
 
-        # ── 2. Encabezado de la Jornada (Metadatos) ───────────────────
-        meta_data = [
-            [Paragraph("Fecha:", style_meta_label), Paragraph(fecha_str, style_meta_val)],
-            [Paragraph("Cátedra:", style_meta_label), Paragraph(str(catedra or ""), style_meta_val)],
-            [Paragraph("Horario de entrada:", style_meta_label), Paragraph(entrada_str, style_meta_val)],
-            [Paragraph("Horario de salida:", style_meta_label), Paragraph(salida_str, style_meta_val)],
-            [Paragraph("Usuario:", style_meta_label), Paragraph(str(usuario_docente or ""), style_meta_val)],
+        # 1. Cabecera Institucional
+        elementos.append(Paragraph("IES N.º 7 POPULORUM PROGRESSIO", style_inst))
+        elementos.append(Paragraph("INFORME OFICIAL DE ASISTENCIA Y CONTROL HORARIO DOCENTE", style_titulo))
+        
+        fecha_emision = datetime.now().strftime("%d/%m/%Y %H:%M")
+        meta_str = f"Filtros: {filtros_desc} &nbsp;|&nbsp; Fecha de Emisión: {fecha_emision} &nbsp;|&nbsp; Operador: {operador_nombre}"
+        elementos.append(Paragraph(meta_str, style_meta))
+
+        # 2. Tabla de Datos
+        headers = [
+            Paragraph("Fecha", style_cell_header),
+            Paragraph("Legajo", style_cell_header),
+            Paragraph("Docente", style_cell_header),
+            Paragraph("Cátedra / Actividad", style_cell_header),
+            Paragraph("Horario Previsto", style_cell_header),
+            Paragraph("Entrada", style_cell_header),
+            Paragraph("Estado Entrada", style_cell_header),
+            Paragraph("Salida", style_cell_header),
+            Paragraph("Estado Salida", style_cell_header),
+            Paragraph("Observaciones", style_cell_header),
         ]
 
-        t_meta = Table(meta_data, colWidths=[120, 400])
-        t_meta.setStyle(TableStyle([
-            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
-            ('TOPPADDING', (0, 0), (-1, -1), 3),
-            ('LEFTPADDING', (0, 0), (-1, -1), 0),
-        ]))
-        elements.append(t_meta)
-        elements.append(Spacer(1, 18))
+        data = [headers]
 
-        # ── 3. Tabla de Alumnos Presentes ────────────────────────────
-        # Anchos de columna que suman 520 pt (área imprimible de A4)
-        col_widths = [28, 96, 96, 75, 75, 75, 75]
-        headers = ["#", "Apellido", "Nombre", "DNI", "Libreta", "Entrada", "Salida"]
-        table_rows = [headers]
-
-        total_alumnos = len(asistencias)
-
-        if total_alumnos == 0:
-            # Caso especial 7.2: Jornada sin asistencias
-            msg_p = Paragraph(
-                "<i>No se registraron asistencias para esta Jornada.</i>",
-                style_cell_center
-            )
-            # Fila combinada
-            table_rows.append([msg_p, "", "", "", "", "", ""])
+        for r in registros:
+            fecha_str = r["fecha"].strftime("%d/%m/%Y") if isinstance(r["fecha"], (date, datetime)) else str(r["fecha"])
             
-            t_asist = Table(table_rows, colWidths=col_widths)
-            t_asist.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1F497D')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 9),
-                ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
-                ('TOPPADDING', (0, 0), (-1, 0), 6),
-                ('SPAN', (0, 1), (-1, 1)),  # Combinar toda la fila de mensaje
-                ('ALIGN', (0, 1), (-1, 1), 'CENTER'),
-                ('BOTTOMPADDING', (0, 1), (-1, 1), 10),
-                ('TOPPADDING', (0, 1), (-1, 1), 10),
-                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D9D9D9')),
-            ]))
-        else:
-            for idx, alu in enumerate(asistencias, start=1):
-                apellido, nombre, dni, libreta, f_ent, f_sal = alu
+            h_prev_in = r["horario_previsto_entrada"].strftime("%H:%M") if r["horario_previsto_entrada"] else "-"
+            h_prev_out = r["horario_previsto_salida"].strftime("%H:%M") if r["horario_previsto_salida"] else "-"
+            previsto_str = f"{h_prev_in} - {h_prev_out}"
 
-                ent_str = f_ent.strftime("%H:%M") if isinstance(f_ent, (datetime, time)) else (str(f_ent) if f_ent else "")
-                sal_str = f_sal.strftime("%H:%M") if isinstance(f_sal, (datetime, time)) else ("Sin registrar" if f_sal is None else str(f_sal))
+            ent_str = r["hora_marcada_entrada"].strftime("%H:%M") if r["hora_marcada_entrada"] else "-"
+            sal_str = r["hora_marcada_salida"].strftime("%H:%M") if r["hora_marcada_salida"] else "Sin Salida"
 
-                row = [
-                    Paragraph(str(idx), style_cell_center),
-                    Paragraph(str(apellido), style_cell),
-                    Paragraph(str(nombre), style_cell),
-                    Paragraph(str(dni), style_cell_center),
-                    Paragraph(str(libreta), style_cell_center),
-                    Paragraph(ent_str, style_cell_center),
-                    Paragraph(sal_str, style_cell_center),
-                ]
-                table_rows.append(row)
+            # Estado Entrada
+            if r["estado_entrada"] == "tardanza":
+                est_in_str = f"<font color='#d35400'><b>Tardanza (+{r['minutos_tardanza']}m)</b></font>"
+            else:
+                est_in_str = "<font color='#27ae60'><b>En Horario</b></font>"
 
-            t_asist = Table(table_rows, colWidths=col_widths)
-            
-            t_style = [
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1F497D')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 9),
-                ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-                ('TOPPADDING', (0, 0), (-1, -1), 5),
-                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D9D9D9')),
+            # Estado Salida
+            if r["estado_salida"] == "anticipada":
+                est_out_str = f"<font color='#c0392b'><b>Anticipada (-{r['minutos_anticipada']}m)</b></font>"
+            elif r["estado_salida"] == "sin_salida":
+                est_out_str = "<font color='#7f8c8d'><i>Sin Salida</i></font>"
+            else:
+                est_out_str = "<font color='#2980b9'><b>Normal</b></font>"
+
+            fila = [
+                Paragraph(fecha_str, style_cell_center),
+                Paragraph(r["legajo"], style_cell_center),
+                Paragraph(r["docente_nombre"], style_cell_bold),
+                Paragraph(r["actividad_nombre"], style_cell),
+                Paragraph(previsto_str, style_cell_center),
+                Paragraph(ent_str, style_cell_center),
+                Paragraph(est_in_str, style_cell_center),
+                Paragraph(sal_str, style_cell_center),
+                Paragraph(est_out_str, style_cell_center),
+                Paragraph(r.get("observaciones") or "-", style_cell),
             ]
+            data.append(fila)
 
-            # Fondo cebra alternado para legibilidad
-            for r in range(1, len(table_rows)):
-                bg = colors.HexColor('#F8F9FA') if r % 2 == 0 else colors.white
-                t_style.append(('BACKGROUND', (0, r), (-1, r), bg))
+        # Anchos de columna en Landscape A4 (Total ~ 770 pt)
+        col_widths = [55, 55, 120, 130, 75, 55, 80, 55, 75, 70]
+        tabla = Table(data, colWidths=col_widths, repeatRows=1)
 
-            t_asist.setStyle(TableStyle(t_style))
+        t_style = [
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0D3B66")),
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#D0D0D0")),
+            ("TOPPADDING", (0, 0), (-1, -1), 4),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+        ]
 
-        elements.append(t_asist)
-        elements.append(Spacer(1, 14))
+        # Zebra striping
+        for i in range(1, len(data)):
+            if i % 2 == 0:
+                t_style.append(("BACKGROUND", (0, i), (-1, i), colors.HexColor("#F8F9FA")))
 
-        # ── 4. Contador Final con Singular y Plural ───────────────────
-        if total_alumnos == 0:
-            texto_contador = "0 alumnos presentes."
-        elif total_alumnos == 1:
-            texto_contador = "Se registró 1 alumno presente en total."
-        else:
-            texto_contador = f"Se registraron {total_alumnos} alumnos presentes en total."
+        tabla.setStyle(TableStyle(t_style))
+        elementos.append(tabla)
+        elementos.append(Spacer(1, 16))
 
-        elements.append(Paragraph(texto_contador, style_contador))
+        # 3. Resumen y Firmas
+        total_reg = len(registros)
+        tardanzas = sum(1 for r in registros if r["estado_entrada"] == "tardanza")
+        en_horario = sum(1 for r in registros if r["estado_entrada"] == "en_horario")
+        anticipadas = sum(1 for r in registros if r["estado_salida"] == "anticipada")
+        sin_salida = sum(1 for r in registros if r["estado_salida"] == "sin_salida")
 
-        # Construir el PDF
-        doc.build(elements)
+        resumen_html = (
+            f"<b>Resumen Estadístico:</b> &nbsp; Total Clases/Marcaciones: <b>{total_reg}</b> &nbsp;|&nbsp; "
+            f"En Horario: <b>{en_horario}</b> &nbsp;|&nbsp; Tardanzas: <b>{tardanzas}</b> &nbsp;|&nbsp; "
+            f"Salidas Anticipadas: <b>{anticipadas}</b> &nbsp;|&nbsp; Pendientes de Revisión: <b>{sin_salida}</b>"
+        )
+        style_resumen = ParagraphStyle("ResumenStyle", parent=styles["Normal"], fontSize=8, textColor=colors.HexColor("#333333"))
+        elementos.append(Paragraph(resumen_html, style_resumen))
+        elementos.append(Spacer(1, 32))
+
+        # Bloque de Firmas Institucionales
+        firmas_data = [
+            [
+                Paragraph("___________________________________<br/><b>Firma Bedelía / Mesa de Entrada</b>", style_cell_center),
+                Paragraph("___________________________________<br/><b>Firma Secretaría Académica</b>", style_cell_center),
+            ]
+        ]
+        tabla_firmas = Table(firmas_data, colWidths=[385, 385])
+        tabla_firmas.setStyle(TableStyle([
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ]))
+        elementos.append(KeepTogether(tabla_firmas))
+
+        doc.build(elementos)
