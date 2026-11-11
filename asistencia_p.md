@@ -204,3 +204,59 @@ Se ejecutó la suite de pruebas contra PostgreSQL en Docker, superando el 100% d
 9. `LicenciaRepository (Particulares)`: Cupo inicial de 6, descuento a 5 tras uso.
 10. `LicenciaRepository (Médica)`: Transición `pendiente` -> `confirmada` al registrar certificado.
 11. `InformeRepository`: Generación de planillas y cálculo de resúmenes ejecutivos.
+
+---
+
+## 📌 Paso 3: Motor de Reconocimiento y Diálogo Modal Obligatorio
+
+### 1. Objetivo del Paso 3
+Dar estricto cumplimiento a los **requisitos comunes y del flujo de marcación** estipulados en las **Secciones 4, 5.1 y 5.3** de la consigna oficial:
+* Ninguna marcación se persiste inmediatamente tras la identificación.
+* Se presenta un diálogo modal obligatorio (`ConfirmacionMarcacionDialog`) con el docente reconocido, la cátedra u obligación horaria y la acción propuesta (ENTRADA / SALIDA).
+* Si el docente presiona **OK**, se efectiviza el INSERT o UPDATE en PostgreSQL.
+* Si el docente presiona **Cancelar** (o cierra el modal), la operación se descarta completamente sin alterar la base de datos.
+* Mientras el modal está visible, **la webcam continúa transmitiendo en vivo a 30 FPS**, pero el sistema **pausa temporalmente nuevos reconocimientos** para evitar solicitudes superpuestas. Al cerrarse el diálogo (por OK o Cancelar), el reconocimiento se reanuda con un enfriamiento preventivo (*cooldown*).
+
+---
+
+### 2. Módulos Desarrollados y Adaptados
+
+#### A. `src/ui/confirmacion_marcacion_dialog.py` (Nuevo Diálogo Modal)
+* **Clase `ConfirmacionMarcacionDialog(QDialog)`:**
+  * Modal estricto (`setModal(True)`) con diseño institucional adaptado al IES N.º 7 Populorum Progressio.
+  * Badges interactivos según la operación:
+    * `ENTRADA`: Verde (*En Horario*) o Naranja (*Tardanza con minutos de demora*).
+    * `SALIDA`: Azul (*Normal*) o Ámbar (*Salida Anticipada con minutos de anticipación*).
+  * Ficha descriptiva: Docente, Legajo, Actividad/Cátedra, Carrera, Horario previsto y Rol en mesa (si aplica).
+  * Botones de acción ergonómicos:
+    * **`[ OK (Confirmar Registro) ]`**: `accept()` ➔ autoriza la persistencia.
+    * **`[ Cancelar ]`**: `reject()` ➔ descarta la operación.
+
+#### B. `src/ai/reconocimiento_thread.py`
+* Migrado para consumir fotos vectorizadas de la tabla `foto_docente` mediante `DocenteRepository`.
+* Métodos thread-safe de control: `pausar()` y `reanudar()`.
+* Si el hilo está en estado pausado (modal visible), ignora los crops entrantes y emite `finished_processing` de inmediato sin generar eventos de match.
+
+#### C. `src/ui/camera_thread.py`
+* Mantiene el streaming continuo a 30 FPS con el óvalo biométrico y retícula cardinal interactiva.
+* Incorpora `pausar_reconocimiento()` y `reanudar_reconocimiento(cooldown_segundos)`.
+* Al abrirse el modal, el video de la cámara no se congela (cumplimiento reglamentario estricto), pero no se envían nuevos rostros a inferencia.
+
+#### D. `src/ui/asistencia_widget.py`
+* Desacoplado de la antigua configuración manual de "jornada": ahora la app consulta automáticamente la grilla y la hora actual.
+* Integración fluida con `AsistenciaService`:
+  * Si el docente no tiene actividad: notificación visual y de voz ("Sin actividad programada en este horario").
+  * Si la asistencia ya está completa: bloqueo preventivo ("Asistencia ya completada para hoy").
+  * Si la marcación es viable: dispara el modal, captura la decisión del usuario (OK/Cancelar) y reanuda el ciclo de la cámara.
+
+#### E. `requirements.txt`
+* Incorporación de la dependencia `tf-keras` requerida por DeepFace para compatibilidad con TensorFlow / Keras en la nueva versión.
+
+---
+
+### 3. Validación Automatizada Superada (`tests/test_paso3.py`)
+Se ejecutó la suite de verificación automatizada del Paso 3, superando el 100% de las pruebas:
+1. `ReconocimientoThread`: Comportamiento de `pausar()` y `reanudar()` verificado.
+2. `CameraThread`: Pausa de detección sin interrumpir el stream de video a 30 FPS y reanudación con *cooldown*.
+3. `ConfirmacionMarcacionDialog`: Instanciación y renderizado en modo Entrada con tardanza (botones OK / Cancelar activos y modal estricto).
+4. `ConfirmacionMarcacionDialog`: Instanciación y renderizado en modo Salida anticipada.

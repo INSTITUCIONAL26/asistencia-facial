@@ -3,6 +3,7 @@ opencv-python
 deepface
 tensorflow
 keras
+tf-keras
 psycopg[binary]
 python-dotenv
 pyttsx3
