@@ -260,3 +260,59 @@ Se ejecutó la suite de verificación automatizada del Paso 3, superando el 100%
 2. `CameraThread`: Pausa de detección sin interrumpir el stream de video a 30 FPS y reanudación con *cooldown*.
 3. `ConfirmacionMarcacionDialog`: Instanciación y renderizado en modo Entrada con tardanza (botones OK / Cancelar activos y modal estricto).
 4. `ConfirmacionMarcacionDialog`: Instanciación y renderizado en modo Salida anticipada.
+
+---
+
+## 📌 Paso 4: Adaptación de la Interfaz de Usuario e Identidad Visual
+
+### 1. Objetivo del Paso 4
+Cumplir estrictamente con la **Sección 7 (Adaptación de la interfaz gráfica)** del documento de cátedra:
+* Reflejar con claridad el contexto real del **IES N.º 7 Populorum Progressio**.
+* Adoptar terminología propia del dominio docente: Cátedras, Obligaciones Horarias, Licencias Particulares, Mesas de Examen y Bedelía.
+* Diseñar las pantallas de gestión administrativa requeridas para operar el sistema en mesa de entrada.
+
+---
+
+### 2. Módulos Desarrollados y Reestructurados
+
+#### A. `src/ui/main_window.py` (Navegación e Identidad Institucional)
+* **Sidebar renovado con 5 módulos operativos:**
+  1. `Captura Facial` (`AsistenciaWidget`): Marcación biométrica con cámara activa y modal obligatorio.
+  2. `Gestión de Docentes` (`RegistrarDocenteWidget`): Enrolamiento con 3 fotos biométricas.
+  3. `Horarios y Cátedras` (`HorariosWidget`): Planificación horaria y asignación de cátedras.
+  4. `Licencias / Particulares` (`LicenciasWidget`): Control de ausencias y certificados médicos.
+  5. `Informes y Auditoría` (`InformesWidget`): Planillas de secretaría y exportación.
+* **Encabezado institucional:** Logotipo y texto "IES N.º 7 POPULORUM PROGRESSIO - Asistencia Docente".
+* **Ficha de operador:** Muestra en el pie del sidebar el usuario administrativo autenticado.
+* **Reactividad entre vistas:** Conexión de señales para que al enrolar un docente, los desplegables de horarios y licencias se actualicen automáticamente.
+
+#### B. `src/ui/registrar_docente_widget.py` (Enrolamiento Docente)
+* Formulario completo con validación de Legajo, Nombre, Apellido, DNI y **CUIL** (obligatorio según Sección 5 de la consigna).
+* Componentes biométricos dedicados para la toma o subida de los 3 ángulos faciales (**Frontal, Izquierdo y Derecho**).
+* Integración directa con `CamaraDialog` para captura asistida en vivo.
+
+#### C. `src/ui/horarios_widget.py` (Planificación Horaria)
+* Asignación de **Clases Regulares de 1 hora y 20 minutos reloj (80 min)**: el sistema calcula automáticamente el horario de finalización sumando 80 minutos al horario de inicio.
+* Soporte para **Mesas de Examen** con selección de fecha puntual y rol docente (*Presidente, Vocal, Auxiliar*).
+* Soporte para **Jornadas Institucionales** de alcance general.
+* Grilla interactiva con el cronograma semanal y eventos programados.
+
+#### D. `src/ui/licencias_widget.py` (Particulares y Certificados Médicos)
+* **Control de Cupo:** Badge interactivo que indica en tiempo real los días particulares disponibles del docente en el año (ej: "5 disponibles de 6").
+* **Licencias Médicas:** Registro inicial en estado `PENDIENTE`.
+* **Botón de Auditoría:** "Confirmar Presentación de Certificado Médico" para promover la licencia a `CONFIRMADA` con fecha de recepción formal.
+* Tabla histórica con estado visual en colores (Verde = Confirmada, Amarillo = Pendiente).
+
+#### E. `src/ui/login_window.py` y `src/ui/register_window.py`
+* Adaptación de títulos, cabeceras institucionales y paleta visual oscura profesional (`#111424`, `#1a1e36`, `#0d6efd`).
+
+---
+
+### 3. Validación Automatizada Superada (`tests/test_paso4.py`)
+Se ejecutó la suite de integración de UI, superando el 100% de las pruebas:
+1. `LoginWindow`: Título institucional y campos validados.
+2. `RegisterWindow`: Registro de operadores con identidad IES N.º 7.
+3. `RegistrarDocenteWidget`: Componentes biométricos de 3 ángulos activos.
+4. `HorariosWidget`: Cálculos automáticos de 80 minutos y persistencia de grilla.
+5. `LicenciasWidget`: Control dinámico de cupo de particulares y confirmación médica.
+6. `MainWindow`: Integración de los 5 módulos en el QStackedWidget con navegación funcional.

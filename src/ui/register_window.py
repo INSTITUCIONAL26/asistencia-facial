@@ -1,60 +1,72 @@
+"""
+Ventana de Registro de Operadores del Sistema.
+IES N.º 7 Populorum Progressio
+"""
 from PySide6.QtWidgets import (
     QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget, QMessageBox
 )
+from PySide6.QtCore import Qt
 from repositories.user_repository import UserRepository
 import psycopg
 
+
 class RegisterWindow(QWidget):
+    """
+    Registro de nuevo personal administrativo para operar la mesa de entrada.
+    """
+
     def __init__(self):
         super().__init__()
         self.repo = UserRepository()
-        self.setWindowTitle("Crear nuevo usuario")
-        self.resize(350, 400)
+        self.setWindowTitle("IES N.º 7 Populorum Progressio - Registro de Operador")
+        self.resize(380, 440)
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #111424;
+                color: #ffffff;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            }
+        """)
+
+        lbl_inst = QLabel("IES N.º 7 POPULORUM PROGRESSIO")
+        lbl_inst.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lbl_inst.setStyleSheet("color: #3498db; font-size: 11px; font-weight: bold; letter-spacing: 1.5px;")
+
+        lbl_titulo = QLabel("Nuevo Operador de Mesa")
+        lbl_titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lbl_titulo.setStyleSheet("color: #ffffff; font-size: 18px; font-weight: bold; margin-bottom: 6px;")
 
         # Inputs
-        self.username_input = QLineEdit()
-        self.username_input.setPlaceholderText("Nombre de usuario (Obligatorio)")
-        self.username_input.setStyleSheet("padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;")
-
-        self.password_input = QLineEdit()
-        self.password_input.setPlaceholderText("Contraseña (Obligatorio)")
+        self.username_input = self._crear_input("Nombre de usuario (*)")
+        self.password_input = self._crear_input("Contraseña (*)")
         self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
-        self.password_input.setStyleSheet("padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;")
+        self.email_input = self._crear_input("Correo electrónico institucional")
+        self.dni_input = self._crear_input("DNI")
+        self.cuil_input = self._crear_input("CUIL")
 
-        self.email_input = QLineEdit()
-        self.email_input.setPlaceholderText("Correo electrónico (Opcional)")
-        self.email_input.setStyleSheet("padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;")
-
-        self.dni_input = QLineEdit()
-        self.dni_input.setPlaceholderText("DNI (Opcional)")
-        self.dni_input.setStyleSheet("padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;")
-
-        self.cuil_input = QLineEdit()
-        self.cuil_input.setPlaceholderText("CUIL (Opcional)")
-        self.cuil_input.setStyleSheet("padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;")
-
-        # Botón
-        self.register_button = QPushButton("Registrar")
+        self.register_button = QPushButton("Registrar Operador")
+        self.register_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.register_button.setStyleSheet("""
             QPushButton {
-                background-color: #198754;
+                background-color: #0d6efd;
                 color: white;
-                padding: 10px;
+                padding: 11px;
                 font-weight: bold;
-                border-radius: 5px;
+                border-radius: 6px;
                 font-size: 14px;
+                border: none;
+                margin-top: 8px;
             }
-            QPushButton:hover {
-                background-color: #157347;
-            }
+            QPushButton:hover { background-color: #0b5ed7; }
         """)
         self.register_button.clicked.connect(self.registrar_usuario)
 
-        # Layout
         layout = QVBoxLayout()
-        layout.setContentsMargins(30, 30, 30, 30)
-        layout.setSpacing(15)
-        
+        layout.setContentsMargins(36, 28, 36, 28)
+        layout.setSpacing(12)
+
+        layout.addWidget(lbl_inst)
+        layout.addWidget(lbl_titulo)
         layout.addWidget(self.username_input)
         layout.addWidget(self.password_input)
         layout.addWidget(self.email_input)
@@ -62,27 +74,40 @@ class RegisterWindow(QWidget):
         layout.addWidget(self.cuil_input)
         layout.addWidget(self.register_button)
         layout.addStretch()
-        
         self.setLayout(layout)
 
+    def _crear_input(self, placeholder: str) -> QLineEdit:
+        inp = QLineEdit()
+        inp.setPlaceholderText(placeholder)
+        inp.setStyleSheet("""
+            QLineEdit {
+                background-color: #1a1e36;
+                color: #ffffff;
+                padding: 9px 12px;
+                font-size: 13px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 5px;
+            }
+            QLineEdit:focus { border: 1px solid #3498db; }
+        """)
+        return inp
+
     def registrar_usuario(self):
-        usuario = self.username_input.text().strip()
-        contra = self.password_input.text().strip()
-        
-        # Si están vacíos, se convierten en None para que en SQL sean NULL
-        correo = self.email_input.text().strip() or None
+        username = self.username_input.text().strip()
+        password = self.password_input.text().strip()
+        email = self.email_input.text().strip() or None
         dni = self.dni_input.text().strip() or None
         cuil = self.cuil_input.text().strip() or None
 
-        if not usuario or not contra:
-            QMessageBox.warning(self, "Datos incompletos", "El nombre de usuario y contraseña son obligatorios.")
+        if not username or not password:
+            QMessageBox.warning(self, "Campos obligatorios", "El nombre de usuario y la contraseña son obligatorios.")
             return
 
         try:
-            self.repo.create_user(usuario, correo, dni, cuil, contra)
-            QMessageBox.information(self, "Éxito", "Usuario creado correctamente.")
+            self.repo.create_user(username, email, dni, cuil, password)
+            QMessageBox.information(self, "Éxito", f"Operador '{username}' registrado correctamente.")
             self.close()
-        except psycopg.errors.UniqueViolation:
-            QMessageBox.critical(self, "Error", "El usuario, correo, DNI o CUIL ya existe en la base de datos.")
+        except psycopg.IntegrityError:
+            QMessageBox.critical(self, "Error", "El usuario, correo, DNI o CUIL ya se encuentran registrados.")
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Ocurrió un error al guardar: {str(e)}")
+            QMessageBox.critical(self, "Error inesperado", str(e))
